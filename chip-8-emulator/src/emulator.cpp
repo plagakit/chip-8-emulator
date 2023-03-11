@@ -4,13 +4,13 @@
 
 int main()
 {
-    LoadFile("C:\\Users\\thoma\\Documents\\CPP\\chip-8-emulator\\roms\\IBMLogo.ch8");
-    Init();
+    CHIP8 emulator("C:\\Users\\thoma\\Documents\\CPP\\chip-8-emulator\\roms\\IBMLogo.ch8");
 
-    for (int i = 0; i < 10; i++)
-        Update();
+    sf::RenderWindow window(sf::VideoMode(1024, 512), "Game", sf::Style::Close | sf::Style::Titlebar);
+    window.setFramerateLimit(2);
 
-    sf::RenderWindow window(sf::VideoMode(720, 480), "Game", sf::Style::Close | sf::Style::Titlebar);
+    sf::RectangleShape pixel(sf::Vector2f(0, 0));
+    pixel.setSize(sf::Vector2f(16, 16));
 
     while (window.isOpen())
     {
@@ -22,8 +22,8 @@ int main()
         }
 
         window.clear();
-
-        // Draw
+        
+        emulator.Update();
 
         window.display();
     }

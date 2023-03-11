@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
+
 using BYTE = unsigned char;
 using WORD = short;
 
@@ -18,7 +19,7 @@ CHIP-8 Memory Map:
 */
 BYTE RAM[4096];
 
-bool display[64][32];
+BYTE display[64][32];
 
 WORD PC; // program counter
 
@@ -69,6 +70,9 @@ void Init()
 {
 	PC = 0x0200; // first thing in data
 	I = 0x0000;
+	for (int i = 0; i < 64; i++)
+		for (int j = 0; j < 32; j++)
+			display[i][j] = 0;
 	
 	std::cout << "Initialzied CHIP-8." << std::endl;
 }
@@ -89,9 +93,9 @@ void LoadFile(const char* path)
 
 	// Print out bytes
 	std::cout << "Reading memory from " << std::string(path) << "...\n";
-	for (int i = 0; i < gameSize; i++)
-		printf("%02x ", buffer[i]);
-	std::cout << std::endl;
+	//for (int i = 0; i < gameSize; i++)
+	//	printf("%02x ", buffer[i]);
+	//std::cout << std::endl;
 
 	// Load the game into RAM
 	for (int i = 0; i < gameSize; i++)
@@ -104,15 +108,72 @@ void Update()
 	// Fetch
 
 	BYTE b1 = RAM[PC];		// byte 1
-	BYTE b2 = RAM[PC + 1];	// byte 2
-
-	BYTE instruction = b1 >> 4;	// first nibble
-	BYTE vx = b1 & 0x0F;		// second nibble (x register in V)
-	BYTE vy = b2 >> 4;			// third nibble (y register in V)
-	BYTE n = b2 & 0x0F;			// fourth nibble
+	BYTE b2 = RAM[PC + 1];	// byte 2, denoted by nn
+	
+	WORD inst = (b1 << 8) | b2;	// concat 2 bytes
+	WORD addr = inst & 0x0FFF;	// nnn, lower 12 bits
+	BYTE x = b1 & 0x0F;					// second nibble (x register in V)
+	BYTE y = b2 >> 4;					// third nibble (y register in V)
+	BYTE n = b2 & 0x0F;					// fourth nibble, last 4 bits
 
 	PC += 2; // move program counter to next instruction
 
-	printf("b1: %02x\tb2: %02x\tinst: %02x\n", b1, b2, instruction);
+	// 00E0 - CLS
+	// Clear the screen.
+	if (inst == 0x00E0)
+	{
+		for (int i = 0; i < 64; i++)
+			for (int j = 0; j < 32; j++)
+				display[i][j] = 0;
+	}
 
+	// 1NNN - JMP addr
+	// Sets PC to addr.
+	else if ((b1 >> 4) == 1)
+	{
+		PC = addr;
+	}
+
+	// 6XNN - LD Vx, byte
+	// Set xth register in V to byte
+	else if ((b1 >> 4) == 6)
+	{
+		V[x] = b2;
+	}
+
+	// 7XNN - ADD Vx, byte
+	// Add byte to register x
+	else if ((b1 >> 4) == 7)
+	{
+		V[x] = V[x] + b2;
+	}
+
+	// ANNN - LD I, addr
+	// Set index register to addr
+	else if ((b1 >> 4) == 0xA)
+	{
+		I = b2;
+	}
+
+	// DXYN - DRW Vx, Vy, nibble
+	// Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
+	else if ((b1 >> 4) == 0xD)
+	{
+		V[0xF] = 0; // set collision to false
+		for (int i = 0; i < n && V[y]+i < 32; i++)
+		{
+			BYTE row = RAM[I + i];
+			BYTE ycoord = V[y] + i;
+			
+			for (int j = 0; j < 8 && V[x]+j < 64; j++)
+			{
+				BYTE xcoord = V[x] + j;
+				BYTE bit = (row & (1 << j)) >> j;
+				
+				display[xcoord][ycoord] = display[xcoord][ycoord] ^ bit;
+				V[0xF] = V[0xF] | (display[xcoord][ycoord] & bit); // set if theres a collision
+			}
+
+		}
+	}
 }

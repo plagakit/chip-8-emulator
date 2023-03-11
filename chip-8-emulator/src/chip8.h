@@ -5,8 +5,8 @@
 
 class CHIP8 {
 
-	using BYTE = unsigned char;
-	using WORD = unsigned short;
+	using BYTE = uint8_t;
+	using WORD = uint16_t;
 
 public:
 

@@ -65,9 +65,6 @@ public:
 		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
 
-	std::mt19937 rng;
-	std::uniform_int_distribution<> randByte;
-
 	CHIP8(const char* path);
 	bool QueryKey(BYTE key);
 	void Update();

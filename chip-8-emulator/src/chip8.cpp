@@ -7,12 +7,7 @@
 
 
 CHIP8::CHIP8(const char* path)
-{
-	// Init randomness
-	std::random_device rd;
-	rng = std::mt19937(rd);
-	randByte = std::uniform_int_distribution<>(0, 256);
-	
+{	
 	// Read ROM
 	FILE* file = fopen(path, "rb");
 	if (file == NULL)
@@ -273,6 +268,10 @@ void CHIP8::Update()
 	// Set Vx = random byte AND nn
 	else if ((b1 >> 4) == 0xC)
 	{
+		static std::random_device rd;
+		static std::mt19937 rng(rd());
+		std::uniform_int_distribution<> randByte(0, 256);
+		
 		V[x] = randByte(rng) & b2;
 	}
 

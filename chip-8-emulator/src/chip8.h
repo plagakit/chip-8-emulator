@@ -1,7 +1,6 @@
 #pragma once
 
-#include <iostream>
-#include <stdexcept>
+#include <cstdint>
 
 class CHIP8 {
 
@@ -19,7 +18,7 @@ public:
 	*/
 	BYTE RAM[4096];
 
-	bool display[64][32];
+	bool display[32][64];
 
 	WORD PC; // program counter
 

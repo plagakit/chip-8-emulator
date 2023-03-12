@@ -22,8 +22,22 @@ int main()
         }
 
         window.clear();
-        
+
         emulator.Update();
+
+
+        for (int i = 0; i < 32; i++)
+        {
+            for (int j = 0; j < 64; j++)
+            {
+                if (emulator.display[i][j])
+                {
+                    pixel.setPosition(j * 16, i * 16);
+                    window.draw(pixel);
+                }
+            }
+        }
+
 
         window.display();
     }

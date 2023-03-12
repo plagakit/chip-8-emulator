@@ -68,6 +68,7 @@ bool CHIP8::QueryKey(BYTE key)
 	case 0xD: return sf::Keyboard::isKeyPressed(sf::Keyboard::R);
 	case 0xE: return sf::Keyboard::isKeyPressed(sf::Keyboard::F);
 	case 0xF: return sf::Keyboard::isKeyPressed(sf::Keyboard::V);
+	default: return false;
 	}
 }
 

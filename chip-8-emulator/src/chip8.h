@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <stack>
+#include <random>
 
 class CHIP8 {
 
@@ -24,7 +26,7 @@ public:
 
 	WORD I; // index register
 
-	WORD stack[16];
+	std::stack<WORD> stack;
 
 	BYTE delayTimer;
 
@@ -63,7 +65,11 @@ public:
 		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
 
+	std::mt19937 rng;
+	std::uniform_int_distribution<> randByte;
+
 	CHIP8(const char* path);
+	bool QueryKey(BYTE key);
 	void Update();
 
 };

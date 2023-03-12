@@ -3,12 +3,17 @@
 #include <iostream>
 #include <stdexcept>
 #include <bitset>
+#include <SFML/Window/Keyboard.hpp>
 
 
 CHIP8::CHIP8(const char* path)
 {
+	// Init randomness
+	std::random_device rd;
+	rng = std::mt19937(rd);
+	randByte = std::uniform_int_distribution<>(0, 256);
+	
 	// Read ROM
-
 	FILE* file = fopen(path, "rb");
 	if (file == NULL)
 	{
@@ -23,7 +28,6 @@ CHIP8::CHIP8(const char* path)
 
 
 	// Load ROM & font into RAM
-
 	for (int i = 0; i < gameSize; i++)
 		RAM[0x200 + i] = buffer[i];
 
@@ -32,17 +36,13 @@ CHIP8::CHIP8(const char* path)
 
 
 	// Initialize members
-	
 	I = 0x000;
 	PC = 0x0200; // pointer to start of ROM in RAM
 	delayTimer = 0x00;
 	soundTimer = 0x00;
 
 	for (int i = 0; i < 16; i++)
-	{
 		V[i] = 0x00;
-		stack[i] = 0x0000;
-	}
 
 	for (int i = 0; i < 32; i++)
 		for (int j = 0; j < 64; j++)
@@ -52,8 +52,38 @@ CHIP8::CHIP8(const char* path)
 	std::cout << "Initialized CHIP-8." << std::endl;
 }
 
+
+bool CHIP8::QueryKey(BYTE key)
+{
+	switch (key)
+	{
+	case 0: return sf::Keyboard::isKeyPressed(sf::Keyboard::X); 
+	case 1: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num1);
+	case 2: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num2);
+	case 3: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num3);
+	case 4: return sf::Keyboard::isKeyPressed(sf::Keyboard::Q);
+	case 5: return sf::Keyboard::isKeyPressed(sf::Keyboard::W);
+	case 6: return sf::Keyboard::isKeyPressed(sf::Keyboard::E);
+	case 7: return sf::Keyboard::isKeyPressed(sf::Keyboard::A);
+	case 8: return sf::Keyboard::isKeyPressed(sf::Keyboard::S);
+	case 9: return sf::Keyboard::isKeyPressed(sf::Keyboard::D);
+	case 0xA: return sf::Keyboard::isKeyPressed(sf::Keyboard::Z);
+	case 0xB: return sf::Keyboard::isKeyPressed(sf::Keyboard::C);
+	case 0xC: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num4);
+	case 0xD: return sf::Keyboard::isKeyPressed(sf::Keyboard::R);
+	case 0xE: return sf::Keyboard::isKeyPressed(sf::Keyboard::F);
+	case 0xF: return sf::Keyboard::isKeyPressed(sf::Keyboard::V);
+	}
+}
+
+
 void CHIP8::Update()
 {
+	// Update timers
+	// TODO: change this so it matches 60Hz
+	delayTimer--;
+	soundTimer--;
+	
 	// Fetch
 
 	BYTE b1 = RAM[PC];		// byte 1
@@ -79,12 +109,53 @@ void CHIP8::Update()
 				display[i][j] = 0;
 	}
 
+	// 00EE - RET
+	// Pop last address on stack and set PC to it (effectively returning from a function)
+	else if (opcode == 0x00EE)
+	{
+		WORD ret = stack.top();
+		stack.pop();
+		PC = ret;
+	}
+
 	// 1NNN - JMP addr
 	// Sets PC to addr.
 	else if ((b1 >> 4) == 1)
 	{
 		printf("Jump to %03x", addr);
 		PC = addr;
+	}
+
+	// 2NNN - CALL addr
+	// Puts current PC on stack then sets PC to addr, (effectively calls a function at addr)
+	else if ((b1 >> 4) == 2)
+	{
+		stack.push(PC);
+		PC = addr;
+	}
+
+	// 3XNN - SE Vx, byte
+	// Skips next instruction if Vx = nn
+	else if ((b1 >> 4) == 3)
+	{
+		if (V[x] == b2)
+			PC += 2;
+	}
+
+	// 4XNN - SNE Vx, byte
+	// Skips next instruction if Vx != nn
+	else if ((b1 >> 4) == 4)
+	{
+		if (V[x] != b2)
+			PC += 2;
+	}
+
+	// 5XY0 - SE Vx, Vy
+	// Skips next instruction if Vx = Vy
+	else if ((b1 >> 4) == 5)
+	{
+		if (V[x] == V[y])
+			PC += 2;
 	}
 
 	// 6XNN - LD Vx, byte
@@ -103,12 +174,106 @@ void CHIP8::Update()
 		V[x] = V[x] + b2;
 	}
 
+	// 9XY0 - SNE Vx, Vy
+	// Skips next instruction if Vx != Vy
+	else if ((b1 >> 4) == 9)
+	{
+		if (V[x] != V[y])
+			PC += 2;
+	}
+
+	// 8___ - Logical & arithmetic instuctions
+	else if ((b1 >> 4) == 8)
+	{
+		// 8XY0 - LD Vx, Vy
+		// Set Vx = Vy
+		if (n == 0)
+		{
+			V[x] = V[y];
+		}
+
+		// 8XY1 - OR Vx, Vy
+		// Set Vx = Vx OR Vy
+		else if (n == 1)
+		{
+			V[x] = V[x] | V[y];
+		}
+
+		// 8XY2 - AND Vx, Vy
+		// Set Vx = Vx AND Vy
+		else if (n == 2)
+		{
+			V[x] = V[x] & V[y];
+		}
+
+		// 8XY3 - XOR Vx, Vy
+		// Set Vx = Vx XOR Vy
+		else if (n == 3)
+		{
+			V[x] = V[x] ^ V[y];
+		}
+
+		// 8XY4 - ADD Vx, Vy
+		// Set Vx = Vx + Vy, set VF = carry bit if overflowed
+		else if (n == 4)
+		{
+			V[0xF] = (int)(V[x]) + (int)(V[y]) > 0xFF;
+			V[x] = V[x] + V[y];
+		}
+
+		// 8XY5 - SUB Vx, Vy
+		// Set Vx =	Vx - Vy, set Vf = NOT borrow (if Vx > Vy)
+		else if (n == 5)
+		{
+			V[0xF] = V[x] > V[y];
+			V[x] = V[x] - V[y];
+		}
+
+		// 8XY6 - SHR Vx
+		// (Ambiguous) Shift Vx right by 1, set Vf = shifted out bit
+		else if (n == 6)
+		{
+			V[0xF] = V[x] & 1; // rightmost bit
+			V[x] = V[x] >> 1;
+		}
+
+		// 8XY7 - SUBN Vx, Vy
+		// Set Vx = Vy - Vx, set Vf = NOT borrow (if Vy > Vx)
+		else if (n == 7)
+		{
+			V[0xF] = V[y] > V[x];
+			V[x] = V[y] - V[x];
+		}
+
+		// 8XYE - SHL Vx
+		// (Ambiguous) Shift Vx left by 1, set Vf = shifted out bit
+		else if (n == 0xE)
+		{
+			V[0xF] = V[x] & 128; // leftmost bit in byte
+			V[x] = V[x] << 1;
+		}
+	}
+
 	// ANNN - LD I, addr
 	// Set index register to addr
 	else if ((b1 >> 4) == 0xA)
 	{
 		printf("Set I reg to %03x", addr);
 		I = addr;
+	}
+
+	// BNNN - JMP V0, addr
+	// (Ambiguous, went with old CHIP-8) Program counter is set to addr plus V0
+	else if ((b1 >> 4) == 0xB)
+	{
+		PC = addr + V[0];
+	}
+
+	// CXNN - RND Vx, byte
+	// Set Vx = random byte AND nn
+	else if ((b1 >> 4) == 0xC)
+	{
+		V[x] = randByte(rng) & b2;
 	}
 
 	// DXYN - DRW Vx, Vy, nibble
@@ -146,13 +311,45 @@ void CHIP8::Update()
 				}
 				else if (sprite)
 					display[py + i][px + j] = true;
-			
+
 				//printf("%d", sprite);
 			}
 
 			//printf("\n");
 		}
 	}
+
+	// EX9E - SKP Vx
+	// Skip next instruction if key w/ value of Vx is pressed
+	else if ((b1 >> 4) == 0xE && b2 == 0x9E)
+	{
+		if (QueryKey(V[x]))
+			PC += 2;
+	}
+
+	// EXA1 - SKNP Vx
+	// Skip next instruction if key w/ value of Vx is NOT pressed
+	else if ((b1 >> 4) == 0xE && b2 == 0xA1)
+	{
+		if (!QueryKey(V[x]))
+			PC += 2;
+	}
+
+	// FX07 - LD Vx, DT
+	// Set Vx to the current value of the delay timer
+	else if ((b1 >> 4) == 0xF && b2 == 0x07)
+	{
+		V[x] = delayTimer;
+	}
+
+	// FX0A - LD Vx, K
+	// Blocks instructions until a key is pressed, key stored in Vx
+
+	// FX15 - LD DT, Vx
+	// Set delay timer to value in Vx
+
+	// FX18
+
 
 	printf("\n");
 }

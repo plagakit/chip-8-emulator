@@ -7,7 +7,7 @@ int main()
     CHIP8 emulator("C:\\Users\\thoma\\Documents\\CPP\\chip-8-emulator\\roms\\test_opcode.ch8");
 
     sf::RenderWindow window(sf::VideoMode(1024, 512), "Game", sf::Style::Close | sf::Style::Titlebar);
-    window.setFramerateLimit(10);
+    window.setFramerateLimit(60);
 
     sf::RectangleShape pixel(sf::Vector2f(0, 0));
     pixel.setSize(sf::Vector2f(16, 16));
@@ -32,7 +32,7 @@ int main()
             {
                 if (emulator.display[i][j])
                 {
-                    pixel.setPosition(j * 16, i * 16);
+                    pixel.setPosition(j * 16.0f, i * 16.0f);
                     window.draw(pixel);
                 }
             }

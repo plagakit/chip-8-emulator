@@ -344,12 +344,70 @@ void CHIP8::Update()
 
 	// FX0A - LD Vx, K
 	// Blocks instructions until a key is pressed, key stored in Vx
+	else if ((b1 >> 4) == 0xF && b2 == 0x0A)
+	{
+		if (!QueryKey(V[x]))
+			PC -= 2;
+	}
 
 	// FX15 - LD DT, Vx
 	// Set delay timer to value in Vx
+	else if ((b1 >> 4) == 0xF && b2 == 0x15)
+	{
+		delayTimer = V[x];
+	}
 
-	// FX18
+	// FX18 - LD ST, Vx
+	// Set sound timer to value in Vx
+	else if ((b1 >> 4) == 0xF && b2 == 0x18)
+	{
+		soundTimer = V[x];
+	}
 
+	// FX1E - ADD I, Vx
+	// Set I = I + Vx, set Vf = overflow
+	else if ((b1 >> 4) == 0xF && b2 == 0x1E)
+	{
+		V[0xF] = (int)I + (int)V[x] > 0xFFF;
+		I = I + V[x];
+	}
+
+	// FX29 - LD F, Vx
+	// Set I = location of font sprite for digit Vx
+	else if ((b1 >> 4) == 0xF && b2 == 0x29)
+	{
+		I = 0x50 + V[x] * 6; // font sprite is 6 bytes
+	}
+
+	// FX33 - LD B, Vx
+	// Stores the 3 digits of the integer representation of Vx @ I, I+1 and I+2
+	else if ((b1 >> 4) == 0xF && b2 == 0x33)
+	{
+		RAM[I] = (V[x] / 100) % 10;
+		RAM[I + 1] = (V[x] / 10) % 10;
+		RAM[I + 2] = V[x] % 10;
+	}
+
+	// FX55 - LD [I], Vx
+	// (Ambiguous) Stores values from V0-Vx inclusive @ I-I+x (without changing I)
+	else if ((b1 >> 4) == 0xF && b2 == 0x55)
+	{
+		for (int i = 0; i <= V[x]; i++)
+			RAM[I + i] = V[i];
+	}
+
+	// FX65 - LD Vx, [I]
+	// (Ambiguous) Loads values from I-I+x into V0-Vx inclusive (without changing I)
+	else if ((b1 >> 4) == 0xF && b2 == 0x65)
+	{
+		for (int i = 0; i <= V[x]; i++)
+			V[i] = RAM[I + i];
+	}
+
+	else
+	{
+		printf("Unknown instruction - %04x", opcode);
+	}
 
 	printf("\n");
 }

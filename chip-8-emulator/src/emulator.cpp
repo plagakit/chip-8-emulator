@@ -1,46 +1,53 @@
-#include <iostream>
-#include <SFML/Graphics.hpp>
+#include <SDL.h>
+#include <stdio.h>
+
 #include "chip8.h"
 
-int main()
+const int SCREEN_WIDTH = 1024;
+const int SCREEN_HEIGHT = 512;
+
+int main(int argc, char* args[])
 {
-    CHIP8 emulator("..\\roms\\octojam1title.ch8");
+	CHIP8 emulator = CHIP8("..\\roms\\test_opcode.ch8");
 
-    sf::RenderWindow window(sf::VideoMode(1024, 512), "Game", sf::Style::Close | sf::Style::Titlebar);
-    //window.setFramerateLimit(60);
+	//The window we'll be rendering to
+	SDL_Window* window = NULL;
 
-    sf::RectangleShape pixel(sf::Vector2f(0, 0));
-    pixel.setSize(sf::Vector2f(16, 16));
+	//The surface contained by the window
+	SDL_Surface* screenSurface = NULL;
 
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
+	//Initialize SDL
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+	else
+	{
+		//Create window
+		window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		if (window == NULL)
+		{
+			printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+		}
+		else
+		{
+			//Get window surface
+			screenSurface = SDL_GetWindowSurface(window);
 
-        window.clear();
+			//Fill the surface white
+			SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
 
-        emulator.Update();
+			//Update the surface
+			SDL_UpdateWindowSurface(window);
 
+			//Hack to get window to stay up
+			SDL_Event e; bool quit = false; while (quit == false) { while (SDL_PollEvent(&e)) { if (e.type == SDL_QUIT) quit = true; } }
+		}
+	}
 
-        for (int i = 0; i < 32; i++)
-        {
-            for (int j = 0; j < 64; j++)
-            {
-                if (emulator.display[i][j])
-                {
-                    pixel.setPosition(j * 16.0f, i * 16.0f);
-                    window.draw(pixel);
-                }
-            }
-        }
+	//Destroy window
+	SDL_DestroyWindow(window);
 
+	//Quit SDL subsystems
+	SDL_Quit();
 
-        window.display();
-    }
-
-    return 0;
+	return 0;
 }

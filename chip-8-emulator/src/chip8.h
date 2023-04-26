@@ -65,7 +65,6 @@ public:
 		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
 
-	CHIP8();
 	CHIP8(const char* path);
 	bool QueryKey(BYTE key);
 	void Update();

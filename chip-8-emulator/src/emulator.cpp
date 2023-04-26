@@ -1,22 +1,9 @@
 #include "emulator.h"
 
-Emulator::Emulator()
-{
-	window = NULL;
-	surface = NULL;
-	renderer = NULL;
-	chip8 = nullptr;
-	running = false;
-}
-
-Emulator::~Emulator()
-{
-	Terminate();
-}
-
 bool Emulator::Init()
 {
 	chip8 = new CHIP8("..\\roms\\test_opcode.ch8");
+	pixel = { 0, 0, SCREEN_WIDTH / 64, SCREEN_HEIGHT / 32 };
 	
 	bool success = true;
 
@@ -78,7 +65,7 @@ void Emulator::Terminate()
 void Emulator::HandleEvents()
 {
 	SDL_Event e;
-	while (SDL_PollEvent(&e))
+	while (SDL_PollEvent(&e) != 0)
 	{
 		if (e.type == SDL_QUIT)
 			running = false;
@@ -92,7 +79,26 @@ void Emulator::Update()
 
 void Emulator::Render()
 {
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
+	
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	pixel.x = 0;
+	pixel.y = 0;
+	for (int i = 0; i < 64; i++)
+	{
+		for (int j = 0; j < 32; j++)
+		{
+			if (chip8->display[j][i])
+			{
+				pixel.x = i * (SCREEN_WIDTH / 64);
+				pixel.y = j * (SCREEN_HEIGHT / 32);
+				SDL_RenderFillRect(renderer, &pixel);
+			}
+		}
+	}
 
+	SDL_RenderPresent(renderer);
 }
 
 bool Emulator::IsRunning()

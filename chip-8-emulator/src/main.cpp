@@ -2,7 +2,7 @@
 
 int main(int argc, char* args[])
 {
-	Emulator emulator = Emulator();
+	Emulator emulator;
 
 	if (!emulator.Init())
 		return 1;

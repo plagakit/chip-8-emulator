@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-CHIP8::CHIP8() {}
-
 CHIP8::CHIP8(const char* path)
 {	
 	// Read ROM

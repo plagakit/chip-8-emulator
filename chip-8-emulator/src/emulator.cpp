@@ -1,46 +1,107 @@
-#include <iostream>
-#include <SFML/Graphics.hpp>
-#include "chip8.h"
+#include "emulator.h"
 
-int main()
+bool Emulator::Init()
 {
-    CHIP8 emulator("..\\roms\\octojam1title.ch8");
+	chip8 = new CHIP8("..\\roms\\test_opcode.ch8");
+	pixel = { 0, 0, SCREEN_WIDTH / 64, SCREEN_HEIGHT / 32 };
+	
+	bool success = true;
 
-    sf::RenderWindow window(sf::VideoMode(1024, 512), "Game", sf::Style::Close | sf::Style::Titlebar);
-    //window.setFramerateLimit(60);
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	{
+		printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
+		success = false;
+	}
+	else
+	{
+		window = SDL_CreateWindow(WINDOW_TITLE.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		if (window == NULL)
+		{
+			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
+			success = false;
+		}
+		else
+		{
+			// Create vsync accelerated renderer
+			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+			if (renderer == NULL)
+			{
+				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+				success = false;
+			}
+			else
+			{
+				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
-    sf::RectangleShape pixel(sf::Vector2f(0, 0));
-    pixel.setSize(sf::Vector2f(16, 16));
+				// Initialize SDL_image
+				/*int imgFlags = IMG_INIT_PNG;
+				//if (!(IMG_Init(imgFlags) & imgFlags))
+				{
+					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+					success = false;
+				}
+				else*/
+				surface = SDL_GetWindowSurface(window);
+			}
+		}
+	}
 
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
+	running = success;
+	return success;
+}
 
-        window.clear();
+void Emulator::Terminate()
+{
+	delete chip8;
+	
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	renderer = NULL;
+	window = NULL;
 
-        emulator.Update();
+	SDL_Quit();
+}
 
+void Emulator::HandleEvents()
+{
+	SDL_Event e;
+	while (SDL_PollEvent(&e) != 0)
+	{
+		if (e.type == SDL_QUIT)
+			running = false;
+	}
+}
 
-        for (int i = 0; i < 32; i++)
-        {
-            for (int j = 0; j < 64; j++)
-            {
-                if (emulator.display[i][j])
-                {
-                    pixel.setPosition(j * 16.0f, i * 16.0f);
-                    window.draw(pixel);
-                }
-            }
-        }
+void Emulator::Update()
+{
+	chip8->Update();
+}
 
+void Emulator::Render()
+{
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
+	
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	pixel.x = 0;
+	pixel.y = 0;
+	for (int i = 0; i < 64; i++)
+	{
+		for (int j = 0; j < 32; j++)
+		{
+			if (chip8->display[j][i])
+			{
+				pixel.x = i * (SCREEN_WIDTH / 64);
+				pixel.y = j * (SCREEN_HEIGHT / 32);
+				SDL_RenderFillRect(renderer, &pixel);
+			}
+		}
+	}
 
-        window.display();
-    }
+	SDL_RenderPresent(renderer);
+}
 
-    return 0;
+bool Emulator::IsRunning()
+{
+	return running;
 }

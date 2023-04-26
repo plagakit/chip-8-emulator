@@ -1,10 +1,8 @@
 ﻿#include "chip8.h"
 
 #include <iostream>
-#include <stdexcept>
-#include <bitset>
-#include <SFML/Window/Keyboard.hpp>
 
+CHIP8::CHIP8() {}
 
 CHIP8::CHIP8(const char* path)
 {	
@@ -50,7 +48,7 @@ CHIP8::CHIP8(const char* path)
 
 bool CHIP8::QueryKey(BYTE key)
 {
-	switch (key)
+	/*switch (key)
 	{
 	case 0: return sf::Keyboard::isKeyPressed(sf::Keyboard::X); 
 	case 1: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num1);
@@ -69,7 +67,8 @@ bool CHIP8::QueryKey(BYTE key)
 	case 0xE: return sf::Keyboard::isKeyPressed(sf::Keyboard::F);
 	case 0xF: return sf::Keyboard::isKeyPressed(sf::Keyboard::V);
 	default: return false;
-	}
+	}*/
+	return false;
 }
 
 

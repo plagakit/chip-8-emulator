@@ -1,53 +1,99 @@
-#include <SDL.h>
-#include <stdio.h>
+#include "emulator.h"
 
-#include "chip8.h"
-
-const int SCREEN_WIDTH = 1024;
-const int SCREEN_HEIGHT = 512;
-
-int main(int argc, char* args[])
+Emulator::Emulator()
 {
-	CHIP8 emulator = CHIP8("..\\roms\\test_opcode.ch8");
+	window = NULL;
+	surface = NULL;
+	renderer = NULL;
+	chip8 = nullptr;
+	running = false;
+}
 
-	//The window we'll be rendering to
-	SDL_Window* window = NULL;
+Emulator::~Emulator()
+{
+	Terminate();
+}
 
-	//The surface contained by the window
-	SDL_Surface* screenSurface = NULL;
+bool Emulator::Init()
+{
+	chip8 = std::make_unique<CHIP8>(CHIP8("..\\roms\\test_opcode.ch8"));
+	
+	bool success = true;
 
-	//Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
-		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+	{
+		printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
+		success = false;
+	}
 	else
 	{
-		//Create window
-		window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		window = SDL_CreateWindow(WINDOW_TITLE.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 		if (window == NULL)
 		{
-			printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
+			success = false;
 		}
 		else
 		{
-			//Get window surface
-			screenSurface = SDL_GetWindowSurface(window);
+			// Create vsync accelerated renderer
+			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+			if (renderer == NULL)
+			{
+				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+				success = false;
+			}
+			else
+			{
+				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
-			//Fill the surface white
-			SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
-
-			//Update the surface
-			SDL_UpdateWindowSurface(window);
-
-			//Hack to get window to stay up
-			SDL_Event e; bool quit = false; while (quit == false) { while (SDL_PollEvent(&e)) { if (e.type == SDL_QUIT) quit = true; } }
+				// Initialize SDL_image
+				/*int imgFlags = IMG_INIT_PNG;
+				//if (!(IMG_Init(imgFlags) & imgFlags))
+				{
+					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+					success = false;
+				}
+				else*/
+				surface = SDL_GetWindowSurface(window);
+			}
 		}
 	}
 
-	//Destroy window
+	running = success;
+	return success;
+}
+
+void Emulator::Terminate()
+{
+	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
+	renderer = NULL;
+	window = NULL;
 
-	//Quit SDL subsystems
 	SDL_Quit();
+}
 
-	return 0;
+void Emulator::HandleEvents()
+{
+	SDL_Event e;
+	while (SDL_PollEvent(&e))
+	{
+		if (e.type == SDL_QUIT)
+			running = false;
+	}
+}
+
+void Emulator::Update()
+{
+	chip8->Update();
+}
+
+void Emulator::Render()
+{
+
+}
+
+bool Emulator::IsRunning()
+{
+	return running;
 }

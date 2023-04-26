@@ -148,8 +148,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\chip8.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClInclude Include="src\chip8.h" />
     <ClCompile Include="src\emulator.cpp" />
+    <ClInclude Include="src\emulator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

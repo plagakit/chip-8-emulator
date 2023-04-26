@@ -389,16 +389,16 @@ void CHIP8::Update()
 	// (Ambiguous) Stores values from V0-Vx inclusive @ I-I+x (without changing I)
 	else if ((b1 >> 4) == 0xF && b2 == 0x55)
 	{
-		for (int i = 0; i <= V[x]; i++)
-			RAM[I + i] = V[i];
+		//for (int i = 0; i <= V[x]; i++)
+		//	RAM[I + i] = V[i];
 	}
 
 	// FX65 - LD Vx, [I]
 	// (Ambiguous) Loads values from I-I+x into V0-Vx inclusive (without changing I)
 	else if ((b1 >> 4) == 0xF && b2 == 0x65)
 	{
-		for (int i = 0; i <= V[x]; i++)
-			V[i] = RAM[I + i];
+		//for (int i = 0; i <= V[x]; i++)
+		//	V[i] = RAM[I + i];
 	}
 
 	else

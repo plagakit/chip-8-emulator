@@ -27,7 +27,7 @@ private:
 	SDL_Window* window;
 	SDL_Surface* surface;
 	SDL_Renderer* renderer;
-	std::unique_ptr<CHIP8> chip8;
+	CHIP8* chip8;
 	bool running;
 
 };

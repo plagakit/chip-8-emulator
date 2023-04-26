@@ -16,7 +16,7 @@ Emulator::~Emulator()
 
 bool Emulator::Init()
 {
-	chip8 = std::make_unique<CHIP8>(CHIP8("..\\roms\\test_opcode.ch8"));
+	chip8 = new CHIP8("..\\roms\\test_opcode.ch8");
 	
 	bool success = true;
 
@@ -65,6 +65,8 @@ bool Emulator::Init()
 
 void Emulator::Terminate()
 {
+	delete chip8;
+	
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	renderer = NULL;

@@ -386,9 +386,9 @@ void CHIP8::Update()
 	// Stores the 3 digits of the integer representation of Vx @ I, I+1 and I+2
 	else if ((b1 >> 4) == 0xF && b2 == 0x33)
 	{
-		//RAM[I] = (V[x] / 100) % 10;
-		//RAM[I + 1] = (V[x] / 10) % 10;
-		//RAM[I + 2] = V[x] % 10;
+		RAM[I] = (V[x] / 100) % 10;
+		RAM[I + 1] = (V[x] / 10) % 10;
+		RAM[I + 2] = V[x] % 10;
 	}
 
 	// FX55 - LD [I], Vx
@@ -396,16 +396,16 @@ void CHIP8::Update()
 	else if ((b1 >> 4) == 0xF && b2 == 0x55)
 	{
 		printf("Store V0-V%x to I\n", V[x]);
-		//for (int i = 0; i <= V[x]; i++)
-		//	RAM[I + i] = V[i];
+		for (int i = 0; i <= x; i++)
+			RAM[I + i] = V[i];
 	}
 
 	// FX65 - LD Vx, [I]
 	// (Ambiguous) Loads values from I-I+x into V0-Vx inclusive (without changing I)
 	else if ((b1 >> 4) == 0xF && b2 == 0x65)
 	{
-		//for (int i = 0; i <= V[x]; i++)
-		//	V[i] = RAM[I + i];
+		for (int i = 0; i <= x; i++)
+			V[i] = RAM[I + i];
 	}
 
 	else

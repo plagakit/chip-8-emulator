@@ -2,7 +2,7 @@
 
 bool Emulator::Init()
 {
-	chip8 = new CHIP8("..\\roms\\octojam2title.ch8");
+	chip8 = new CHIP8("..\\roms\\test_keypad.ch8");
 	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
 	
 	bool success = true;

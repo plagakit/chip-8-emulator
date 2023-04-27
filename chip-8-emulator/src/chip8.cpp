@@ -67,13 +67,13 @@ void CHIP8::Cycle()
 
 	PC += 2; // move program counter to next instruction
 
-	printf("Running %04x: ", opcode);
+	//printf("Running %04x: ", opcode);
 
 	// 00E0 - CLS
 	// Clear the screen.
 	if (opcode == 0x00E0)
 	{
-		printf("Clear screen");
+		//printf("Clear screen");
 		for (int i = 0; i < 32; i++)
 			for (int j = 0; j < 64; j++)
 				display[i][j] = 0;
@@ -86,14 +86,14 @@ void CHIP8::Cycle()
 		WORD ret = stack.top();
 		stack.pop();
 		PC = ret;
-		printf("Pop last address on stack and set PC to %04x", ret);
+		//printf("Pop last address on stack and set PC to %04x", ret);
 	}
 
 	// 1NNN - JMP addr
 	// Sets PC to addr.
 	else if ((b1 >> 4) == 1)
 	{
-		printf("Jump to %03x", addr);
+		//printf("Jump to %03x", addr);
 		PC = addr;
 	}
 
@@ -101,7 +101,7 @@ void CHIP8::Cycle()
 	// Puts current PC on stack then sets PC to addr, (effectively calls a function at addr)
 	else if ((b1 >> 4) == 2)
 	{
-		printf("Push %04x to stack", PC);
+		//printf("Push %04x to stack", PC);
 		stack.push(PC);
 		PC = addr;
 	}
@@ -110,7 +110,7 @@ void CHIP8::Cycle()
 	// Skips next instruction if Vx = nn
 	else if ((b1 >> 4) == 3)
 	{
-		printf("Skip next instruction if V[%02x] (%02x) == %02x", x, V[x], b2);
+		//printf("Skip if V[%02x] (%02x) == %02x", x, V[x], b2);
 		if (V[x] == b2)
 			PC += 2;
 	}
@@ -119,7 +119,7 @@ void CHIP8::Cycle()
 	// Skips next instruction if Vx != nn
 	else if ((b1 >> 4) == 4)
 	{
-		printf("Skip next instruction if V[%02x] (%02x) != %02x", x, V[x], b2);
+		//printf("Skip if V[%02x] (%02x) != %02x", x, V[x], b2);
 		if (V[x] != b2)
 			PC += 2;
 	}
@@ -128,7 +128,7 @@ void CHIP8::Cycle()
 	// Skips next instruction if Vx = Vy
 	else if ((b1 >> 4) == 5)
 	{
-		printf("Skip next instruction if V[%02x] (%02x) == V[%02x] (%02x)", x, V[x], y, V[y]);
+		//printf("Skip if V[%02x] (%02x) == V[%02x] (%02x)", x, V[x], y, V[y]);
 		if (V[x] == V[y])
 			PC += 2;
 	}
@@ -137,7 +137,7 @@ void CHIP8::Cycle()
 	// Set xth register in V to byte
 	else if ((b1 >> 4) == 6)
 	{
-		printf("Set V[%d] to %02x", x, b2);
+		//printf("Set V[%d] to %02x", x, b2);
 		V[x] = b2;
 	}
 
@@ -145,7 +145,7 @@ void CHIP8::Cycle()
 	// Add byte to register x
 	else if ((b1 >> 4) == 7)
 	{
-		printf("Add V[%d] with %02x", x, b2);
+		//printf("Add V[%d] with %02x", x, b2);
 		V[x] = V[x] + b2;
 	}
 
@@ -153,7 +153,7 @@ void CHIP8::Cycle()
 	// Skips next instruction if Vx != Vy
 	else if ((b1 >> 4) == 9)
 	{
-		printf("Skip next instruction if V[%02x] (%02x) != V[%02x] (%02x)", x, V[x], y, V[y]);
+		//printf("Skip if V[%02x] (%02x) != V[%02x] (%02x)", x, V[x], y, V[y]);
 		if (V[x] != V[y])
 			PC += 2;
 	}
@@ -193,16 +193,18 @@ void CHIP8::Cycle()
 		// Set Vx = Vx + Vy, set VF = carry bit if overflowed
 		else if (n == 4)
 		{
-			V[0xF] = (int)(V[x]) + (int)(V[y]) > 0xFF;
+			int overflow = (int)(V[x]) + (int)(V[y]) > 0xFF;
 			V[x] = V[x] + V[y];
+			V[0xF] = overflow;
 		}
 
 		// 8XY5 - SUB Vx, Vy
-		// Set Vx =	Vx - Vy, set Vf = NOT borrow (if Vx > Vy)
+		// Set Vx =	Vx - Vy, set Vf = NOT borrow (if Vx >= Vy)
 		else if (n == 5)
 		{
-			V[0xF] = V[x] > V[y];
+			int borrow = !(V[x] < V[y]);
 			V[x] = V[x] - V[y];
+			V[0xF] = borrow;
 		}
 
 		// 8XY6 - SHR Vx
@@ -210,15 +212,15 @@ void CHIP8::Cycle()
 		else if (n == 6)
 		{
 			V[0xF] = V[x] & 1; // rightmost bit
-			V[x] = V[x] >> 1;
+			V[x] >>= 1;
 		}
 
 		// 8XY7 - SUBN Vx, Vy
 		// Set Vx = Vy - Vx, set Vf = NOT borrow (if Vy > Vx)
 		else if (n == 7)
 		{
-			V[0xF] = V[y] > V[x];
 			V[x] = V[y] - V[x];
+			V[0xF] = V[y] > V[x];
 		}
 
 		// 8XYE - SHL Vx
@@ -226,7 +228,7 @@ void CHIP8::Cycle()
 		else if (n == 0xE)
 		{
 			V[0xF] = V[x] & 128; // leftmost bit in byte
-			V[x] = V[x] << 1;
+			V[x] <<= 1;
 		}
 	}
 
@@ -234,7 +236,7 @@ void CHIP8::Cycle()
 	// Set index register to addr
 	else if ((b1 >> 4) == 0xA)
 	{
-		printf("Set I reg to %03x", addr);
+		//printf("Set I reg to %03x", addr);
 		I = addr;
 	}
 
@@ -264,7 +266,7 @@ void CHIP8::Cycle()
 		BYTE py = V[y];// % 32;
 		V[0xF] = 0; // set collision to false
 
-		printf("Draw (I = %03x)", I);
+		//printf("Draw (I = %03x)", I);
 
 		for (int i = 0; i < n; i++)
 		{
@@ -348,8 +350,8 @@ void CHIP8::Cycle()
 	// Set I = I + Vx, set Vf = overflow
 	else if ((b1 >> 4) == 0xF && b2 == 0x1E)
 	{
-		V[0xF] = (int)I + (int)V[x] > 0xFFF;
 		I = I + V[x];
+		V[0xF] = (int)I + (int)V[x] > 0xFFF;
 	}
 
 	// FX29 - LD F, Vx
@@ -372,7 +374,7 @@ void CHIP8::Cycle()
 	// (Ambiguous) Stores values from V0-Vx inclusive @ I-I+x (without changing I)
 	else if ((b1 >> 4) == 0xF && b2 == 0x55)
 	{
-		printf("Store V0-V%x to I\n", V[x]);
+		//printf("Store V0-V%x to I\n", V[x]);
 		for (int i = 0; i <= x; i++)
 			RAM[I + i] = V[i];
 	}
@@ -385,10 +387,10 @@ void CHIP8::Cycle()
 			V[i] = RAM[I + i];
 	}
 
-	else
-	{
-		printf("Unknown instruction - %04x", opcode);
-	}
+	//else
+	//{
+		//printf("Unknown instruction - %04x", opcode);
+	//}
 
-	printf("\n");
+	//printf("\n");
 }

@@ -34,6 +34,7 @@ public:
 
 	BYTE V[16]; // variable registers 0 - F
 
+	std::string curInstruction;
 	bool keyStates[16];
 
 	/*

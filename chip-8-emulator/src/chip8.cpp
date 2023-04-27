@@ -109,6 +109,7 @@ void CHIP8::Update()
 		WORD ret = stack.top();
 		stack.pop();
 		PC = ret;
+		printf("Pop last address on stack and set PC to %04x", ret);
 	}
 
 	// 1NNN - JMP addr
@@ -123,6 +124,7 @@ void CHIP8::Update()
 	// Puts current PC on stack then sets PC to addr, (effectively calls a function at addr)
 	else if ((b1 >> 4) == 2)
 	{
+		printf("Push %04x to stack", PC);
 		stack.push(PC);
 		PC = addr;
 	}
@@ -131,6 +133,7 @@ void CHIP8::Update()
 	// Skips next instruction if Vx = nn
 	else if ((b1 >> 4) == 3)
 	{
+		printf("Skip next instruction if V[%02x] (%02x) == %02x", x, V[x], b2);
 		if (V[x] == b2)
 			PC += 2;
 	}
@@ -139,6 +142,7 @@ void CHIP8::Update()
 	// Skips next instruction if Vx != nn
 	else if ((b1 >> 4) == 4)
 	{
+		printf("Skip next instruction if V[%02x] (%02x) != %02x", x, V[x], b2);
 		if (V[x] != b2)
 			PC += 2;
 	}
@@ -147,6 +151,7 @@ void CHIP8::Update()
 	// Skips next instruction if Vx = Vy
 	else if ((b1 >> 4) == 5)
 	{
+		printf("Skip next instruction if V[%02x] (%02x) == V[%02x] (%02x)", x, V[x], y, V[y]);
 		if (V[x] == V[y])
 			PC += 2;
 	}
@@ -171,6 +176,7 @@ void CHIP8::Update()
 	// Skips next instruction if Vx != Vy
 	else if ((b1 >> 4) == 9)
 	{
+		printf("Skip next instruction if V[%02x] (%02x) != V[%02x] (%02x)", x, V[x], y, V[y]);
 		if (V[x] != V[y])
 			PC += 2;
 	}
@@ -380,15 +386,16 @@ void CHIP8::Update()
 	// Stores the 3 digits of the integer representation of Vx @ I, I+1 and I+2
 	else if ((b1 >> 4) == 0xF && b2 == 0x33)
 	{
-		RAM[I] = (V[x] / 100) % 10;
-		RAM[I + 1] = (V[x] / 10) % 10;
-		RAM[I + 2] = V[x] % 10;
+		//RAM[I] = (V[x] / 100) % 10;
+		//RAM[I + 1] = (V[x] / 10) % 10;
+		//RAM[I + 2] = V[x] % 10;
 	}
 
 	// FX55 - LD [I], Vx
 	// (Ambiguous) Stores values from V0-Vx inclusive @ I-I+x (without changing I)
 	else if ((b1 >> 4) == 0xF && b2 == 0x55)
 	{
+		printf("Store V0-V%x to I\n", V[x]);
 		//for (int i = 0; i <= V[x]; i++)
 		//	RAM[I + i] = V[i];
 	}

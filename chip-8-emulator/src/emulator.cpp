@@ -23,7 +23,7 @@ bool Emulator::Init()
 		else
 		{
 			// Create vsync accelerated renderer
-			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);// | SDL_RENDERER_PRESENTVSYNC);
 			if (renderer == NULL)
 			{
 				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
@@ -94,6 +94,7 @@ void Emulator::Render()
 	SDL_RenderClear(renderer);
 	
 	// Draw game
+
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	pixel.x = 0;
 	pixel.y = 0;
@@ -101,13 +102,12 @@ void Emulator::Render()
 	{
 		for (int j = 0; j < 32; j++)
 		{
-			pixel.x = i * (GAME_WIDTH / 64);
-			pixel.y = j * (GAME_HEIGHT / 32);
 			if (chip8->display[j][i])
-				SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-			else
-				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-			SDL_RenderFillRect(renderer, &pixel);
+			{
+				pixel.x = i * (GAME_WIDTH / 64);
+				pixel.y = j * (GAME_HEIGHT / 32);
+				SDL_RenderFillRect(renderer, &pixel);
+			}
 		}
 	}
 

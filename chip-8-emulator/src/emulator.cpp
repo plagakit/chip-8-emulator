@@ -2,7 +2,7 @@
 
 bool Emulator::Init()
 {
-	chip8 = new CHIP8("..\\roms\\test_opcode.ch8");
+	chip8 = new CHIP8("..\\roms\\octojam2title.ch8");
 	pixel = { 0, 0, SCREEN_WIDTH / 64, SCREEN_HEIGHT / 32 };
 	
 	bool success = true;
@@ -32,15 +32,6 @@ bool Emulator::Init()
 			else
 			{
 				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-
-				// Initialize SDL_image
-				/*int imgFlags = IMG_INIT_PNG;
-				//if (!(IMG_Init(imgFlags) & imgFlags))
-				{
-					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
-					success = false;
-				}
-				else*/
 				surface = SDL_GetWindowSurface(window);
 			}
 		}

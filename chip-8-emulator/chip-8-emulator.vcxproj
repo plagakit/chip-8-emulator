@@ -112,7 +112,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib\ImGuiFileDialog;$(ProjectDir)\lib\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,7 +133,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\lib\ImGuiFileDialog;$(ProjectDir)\lib\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,8 +149,29 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="lib\ImGuiFileDialog\ImGuiFileDialog.cpp" />
+    <ClCompile Include="lib\imgui\imgui.cpp" />
+    <ClCompile Include="lib\imgui\imgui_demo.cpp" />
+    <ClCompile Include="lib\imgui\imgui_draw.cpp" />
+    <ClCompile Include="lib\imgui\imgui_impl_sdl2.cpp" />
+    <ClCompile Include="lib\imgui\imgui_impl_sdlrenderer.cpp" />
+    <ClCompile Include="lib\imgui\imgui_tables.cpp" />
+    <ClCompile Include="lib\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\chip8.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClInclude Include="lib\ImGuiFileDialog\dirent\dirent.h" />
+    <ClInclude Include="lib\ImGuiFileDialog\ImGuiFileDialog.h" />
+    <ClInclude Include="lib\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
+    <ClInclude Include="lib\ImGuiFileDialog\stb\stb_image.h" />
+    <ClInclude Include="lib\ImGuiFileDialog\stb\stb_image_resize.h" />
+    <ClInclude Include="lib\imgui\imconfig.h" />
+    <ClInclude Include="lib\imgui\imgui.h" />
+    <ClInclude Include="lib\imgui\imgui_impl_sdl2.h" />
+    <ClInclude Include="lib\imgui\imgui_impl_sdlrenderer.h" />
+    <ClInclude Include="lib\imgui\imgui_internal.h" />
+    <ClInclude Include="lib\imgui\imstb_rectpack.h" />
+    <ClInclude Include="lib\imgui\imstb_textedit.h" />
+    <ClInclude Include="lib\imgui\imstb_truetype.h" />
     <ClInclude Include="src\chip8.h" />
     <ClCompile Include="src\emulator.cpp" />
     <ClInclude Include="src\emulator.h" />

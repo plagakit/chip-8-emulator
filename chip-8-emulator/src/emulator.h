@@ -27,8 +27,10 @@ private:
 	SDL_Window* window;
 	SDL_Surface* surface;
 	SDL_Renderer* renderer;
+
 	SDL_Rect pixel;
 	CHIP8* chip8;
 	bool running;
+	Uint64 delayTime, soundTime;
 
 };

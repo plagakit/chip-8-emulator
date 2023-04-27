@@ -29,8 +29,8 @@ CHIP8::CHIP8(const char* path)
 	// Initialize members
 	I = 0x000;
 	PC = 0x0200; // pointer to start of ROM in RAM
-	delayTimer = 0x00;
-	soundTimer = 0x00;
+	DT = 0x00;
+	ST = 0x00;
 
 	for (int i = 0; i < 16; i++)
 	{
@@ -48,14 +48,8 @@ CHIP8::CHIP8(const char* path)
 
 
 void CHIP8::Cycle()
-{
-	// Update timers
-	// TODO: change this so it matches 60Hz
-	delayTimer--;
-	soundTimer--;
-	
+{	
 	// Fetch
-
 	BYTE b1 = RAM[PC];		// byte 1
 	BYTE b2 = RAM[PC + 1];	// byte 2, denoted by nn
 
@@ -321,7 +315,7 @@ void CHIP8::Cycle()
 	// Set Vx to the current value of the delay timer
 	else if ((b1 >> 4) == 0xF && b2 == 0x07)
 	{
-		V[x] = delayTimer;
+		V[x] = DT;
 	}
 
 	// FX0A - LD Vx, K
@@ -336,14 +330,14 @@ void CHIP8::Cycle()
 	// Set delay timer to value in Vx
 	else if ((b1 >> 4) == 0xF && b2 == 0x15)
 	{
-		delayTimer = V[x];
+		DT = V[x];
 	}
 
 	// FX18 - LD ST, Vx
 	// Set sound timer to value in Vx
 	else if ((b1 >> 4) == 0xF && b2 == 0x18)
 	{
-		soundTimer = V[x];
+		ST = V[x];
 	}
 
 	// FX1E - ADD I, Vx

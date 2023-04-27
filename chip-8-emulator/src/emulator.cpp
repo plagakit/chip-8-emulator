@@ -2,8 +2,10 @@
 
 bool Emulator::Init()
 {
-	chip8 = new CHIP8("..\\roms\\test_keypad.ch8");
+	chip8 = new CHIP8("..\\roms\\slipperyslope.ch8");
 	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
+	delayTime = SDL_GetTicks64();
+	soundTime = SDL_GetTicks64();
 	
 	bool success = true;
 
@@ -84,6 +86,19 @@ void Emulator::Update()
 	chip8->keyStates[0xB] = kb[SDL_SCANCODE_C];
 	chip8->keyStates[0xF] = kb[SDL_SCANCODE_V];
 	
+	// Decrement DT/ST register if 1/60 secs (16.66 ms) has passed
+	Uint64 time = SDL_GetTicks64();
+	if (time - delayTime > 16 && chip8->DT > 0)
+	{
+		delayTime = time;
+		chip8->DT--;
+	}
+	if (time - soundTime > 16 && chip8->ST > 0)
+	{
+		soundTime = time;
+		chip8->ST--;
+	}
+
 	// Do a cycle
 	chip8->Cycle();
 }

@@ -28,9 +28,9 @@ public:
 
 	std::stack<WORD> stack;
 
-	BYTE delayTimer;
+	BYTE DT;
 
-	BYTE soundTimer;
+	BYTE ST;
 
 	BYTE V[16]; // variable registers 0 - F
 

@@ -9,8 +9,10 @@ class Emulator {
 
 public:
 	const std::string WINDOW_TITLE = "CHIP-8 Emulator";
-	const int SCREEN_WIDTH = 1024;
-	const int SCREEN_HEIGHT = 512;
+	const int WINDOW_WIDTH = 1280;
+	const int WINDOW_HEIGHT = 720;
+	const int GAME_WIDTH = 1024;
+	const int GAME_HEIGHT = 512;
 
 	bool Init();
 	void Terminate();

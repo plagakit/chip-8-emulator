@@ -3,7 +3,7 @@
 bool Emulator::Init()
 {
 	chip8 = new CHIP8("..\\roms\\octojam2title.ch8");
-	pixel = { 0, 0, SCREEN_WIDTH / 64, SCREEN_HEIGHT / 32 };
+	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
 	
 	bool success = true;
 
@@ -14,7 +14,7 @@ bool Emulator::Init()
 	}
 	else
 	{
-		window = SDL_CreateWindow(WINDOW_TITLE.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		window = SDL_CreateWindow(WINDOW_TITLE.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
 		if (window == NULL)
 		{
 			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
@@ -82,8 +82,8 @@ void Emulator::Render()
 		{
 			if (chip8->display[j][i])
 			{
-				pixel.x = i * (SCREEN_WIDTH / 64);
-				pixel.y = j * (SCREEN_HEIGHT / 32);
+				pixel.x = i * (GAME_WIDTH / 64);
+				pixel.y = j * (GAME_HEIGHT / 32);
 				SDL_RenderFillRect(renderer, &pixel);
 			}
 		}

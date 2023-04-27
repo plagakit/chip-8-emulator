@@ -34,6 +34,8 @@ public:
 
 	BYTE V[16]; // variable registers 0 - F
 
+	bool keyStates[16];
+
 	/*
 
 	Example of how a character is represented in font:
@@ -66,7 +68,6 @@ public:
 	};
 
 	CHIP8(const char* path);
-	bool QueryKey(BYTE key);
-	void Update();
+	void Cycle();
 
 };

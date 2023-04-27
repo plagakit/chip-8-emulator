@@ -33,7 +33,10 @@ CHIP8::CHIP8(const char* path)
 	soundTimer = 0x00;
 
 	for (int i = 0; i < 16; i++)
+	{
 		V[i] = 0x00;
+		keyStates[i] = false;
+	}
 
 	for (int i = 0; i < 32; i++)
 		for (int j = 0; j < 64; j++)
@@ -44,33 +47,7 @@ CHIP8::CHIP8(const char* path)
 }
 
 
-bool CHIP8::QueryKey(BYTE key)
-{
-	/*switch (key)
-	{
-	case 0: return sf::Keyboard::isKeyPressed(sf::Keyboard::X); 
-	case 1: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num1);
-	case 2: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num2);
-	case 3: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num3);
-	case 4: return sf::Keyboard::isKeyPressed(sf::Keyboard::Q);
-	case 5: return sf::Keyboard::isKeyPressed(sf::Keyboard::W);
-	case 6: return sf::Keyboard::isKeyPressed(sf::Keyboard::E);
-	case 7: return sf::Keyboard::isKeyPressed(sf::Keyboard::A);
-	case 8: return sf::Keyboard::isKeyPressed(sf::Keyboard::S);
-	case 9: return sf::Keyboard::isKeyPressed(sf::Keyboard::D);
-	case 0xA: return sf::Keyboard::isKeyPressed(sf::Keyboard::Z);
-	case 0xB: return sf::Keyboard::isKeyPressed(sf::Keyboard::C);
-	case 0xC: return sf::Keyboard::isKeyPressed(sf::Keyboard::Num4);
-	case 0xD: return sf::Keyboard::isKeyPressed(sf::Keyboard::R);
-	case 0xE: return sf::Keyboard::isKeyPressed(sf::Keyboard::F);
-	case 0xF: return sf::Keyboard::isKeyPressed(sf::Keyboard::V);
-	default: return false;
-	}*/
-	return false;
-}
-
-
-void CHIP8::Update()
+void CHIP8::Cycle()
 {
 	// Update timers
 	// TODO: change this so it matches 60Hz
@@ -326,7 +303,7 @@ void CHIP8::Update()
 	// Skip next instruction if key w/ value of Vx is pressed
 	else if ((b1 >> 4) == 0xE && b2 == 0x9E)
 	{
-		if (QueryKey(V[x]))
+		if (keyStates[V[x]])
 			PC += 2;
 	}
 
@@ -334,7 +311,7 @@ void CHIP8::Update()
 	// Skip next instruction if key w/ value of Vx is NOT pressed
 	else if ((b1 >> 4) == 0xE && b2 == 0xA1)
 	{
-		if (!QueryKey(V[x]))
+		if (!keyStates[V[x]])
 			PC += 2;
 	}
 
@@ -349,7 +326,7 @@ void CHIP8::Update()
 	// Blocks instructions until a key is pressed, key stored in Vx
 	else if ((b1 >> 4) == 0xF && b2 == 0x0A)
 	{
-		if (!QueryKey(V[x]))
+		if (!keyStates[V[x]])
 			PC -= 2;
 	}
 

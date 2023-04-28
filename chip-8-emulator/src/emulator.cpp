@@ -1,52 +1,67 @@
 #include "emulator.h"
 
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer.h"
+
 bool Emulator::Init()
 {
 	chip8 = new CHIP8("..\\roms\\slipperyslope.ch8");
 	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
 	delayTime = SDL_GetTicks64();
 	soundTime = SDL_GetTicks64();
-	
-	bool success = true;
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	// Init SDL
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0)
 	{
 		printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
-		success = false;
+		return false;
+	}
+
+	// Create SDL window
+	window = SDL_CreateWindow(WINDOW_TITLE.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+	if (window == NULL)
+	{
+		printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
+		return false;
+	}
+	
+	// Create accelerated renderer
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);// | SDL_RENDERER_PRESENTVSYNC);
+	if (renderer == NULL)
+	{
+		printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+		return false;
 	}
 	else
 	{
-		window = SDL_CreateWindow(WINDOW_TITLE.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
-		if (window == NULL)
-		{
-			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
-			success = false;
-		}
-		else
-		{
-			// Create vsync accelerated renderer
-			renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);// | SDL_RENDERER_PRESENTVSYNC);
-			if (renderer == NULL)
-			{
-				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-				success = false;
-			}
-			else
-			{
-				SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-				surface = SDL_GetWindowSurface(window);
-			}
-		}
+		SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+		surface = SDL_GetWindowSurface(window);
 	}
 
-	running = success;
-	return success;
+	// Init ImGui
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsLight();
+
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+	ImGui_ImplSDLRenderer_Init(renderer);
+
+
+	running = true;
+	return true;
 }
 
 void Emulator::Terminate()
 {
 	delete chip8;
 	
+	ImGui_ImplSDL2_Shutdown();
+	ImGui_ImplSDLRenderer_Shutdown();
+	ImGui::DestroyContext();
+
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	renderer = NULL;
@@ -60,13 +75,33 @@ void Emulator::HandleEvents()
 	SDL_Event e;
 	while (SDL_PollEvent(&e) != 0)
 	{
+		ImGui_ImplSDL2_ProcessEvent(&e);
 		if (e.type == SDL_QUIT)
 			running = false;
 	}
 }
 
 void Emulator::Update()
-{
+{	
+	ImGui_ImplSDLRenderer_NewFrame();
+	ImGui_ImplSDL2_NewFrame();
+	ImGui::NewFrame();
+
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove;
+	bool mainWindow = true;
+	ImGui::SetNextWindowPos(ImVec2(1024, 0), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(256, 720), ImGuiCond_Always);
+
+	ImGui::Begin("Settings", &mainWindow, flags);
+	
+	
+	ImGui::End();
+
+	
+	// UPDATE CHIP 8
+	if (chip8 == nullptr)
+		return;
+	
 	// Update key states
 	const Uint8* kb = SDL_GetKeyboardState(NULL);
 	chip8->keyStates[0x1] = kb[SDL_SCANCODE_1];
@@ -142,6 +177,8 @@ void Emulator::Render()
 		}
 	}
 
+	ImGui::Render();
+	ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 
 	SDL_RenderPresent(renderer);
 }

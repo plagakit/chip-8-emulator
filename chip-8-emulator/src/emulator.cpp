@@ -2,10 +2,11 @@
 
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer.h"
+#include "ImGuiFileDialog.h"
 
 bool Emulator::Init()
 {
-	chip8 = new CHIP8("..\\roms\\slipperyslope.ch8");
+	chip8 = nullptr;// new CHIP8("..\\roms\\slipperyslope.ch8");
 	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
 	delayTime = SDL_GetTicks64();
 	soundTime = SDL_GetTicks64();
@@ -94,6 +95,21 @@ void Emulator::Update()
 
 	ImGui::Begin("Settings", &mainWindow, flags);
 	
+	// LOAD ROM BUTTON
+	if (ImGui::Button("Load ROM", ImVec2(240, 50)))
+	{
+		printf("Clicked button!\n");
+		ImGuiFileDialog::Instance()->OpenDialog("ChooseRom", "Choose File", ".ch8", ".");
+	}
+	if (ImGuiFileDialog::Instance()->Display("ChooseRom"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk())
+		{
+			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+			chip8 = new CHIP8(filePath.c_str());
+		}
+		ImGuiFileDialog::Instance()->Close();
+	}
 	
 	ImGui::End();
 
@@ -140,40 +156,43 @@ void Emulator::Update()
 
 void Emulator::Render()
 {
+	
 	SDL_SetRenderDrawColor(renderer, 94, 75, 107, 255);
 	SDL_RenderClear(renderer);
-	
-	// Draw game
 
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	pixel.x = 0;
-	pixel.y = 0;
-	for (int i = 0; i < 64; i++)
+	// Draw game
+	if (chip8 != nullptr)
 	{
-		for (int j = 0; j < 32; j++)
+		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+		pixel.x = 0;
+		pixel.y = 0;
+		for (int i = 0; i < 64; i++)
 		{
-			if (chip8->display[j][i])
+			for (int j = 0; j < 32; j++)
 			{
-				pixel.x = i * (GAME_WIDTH / 64);
-				pixel.y = j * (GAME_HEIGHT / 32);
-				SDL_RenderFillRect(renderer, &pixel);
+				if (chip8->display[j][i])
+				{
+					pixel.x = i * (GAME_WIDTH / 64);
+					pixel.y = j * (GAME_HEIGHT / 32);
+					SDL_RenderFillRect(renderer, &pixel);
+				}
 			}
 		}
-	}
 
-	// Draw keys
-	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-	SDL_Rect keyRect = { 0, 512, 52, 52 };
-	
-	// Maps CHIP8 keyboard to their values
-	int keyMap[] = {1, 2, 3, 0xC, 4, 5, 6, 0xD, 7, 8, 9, 0xE, 0xA, 0, 0xB, 0xF};
-	for (int i = 0; i < 16; i++)
-	{
-		if (chip8->keyStates[keyMap[i]])
+		// Draw keys
+		SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+		SDL_Rect keyRect = { 0, 512, 52, 52 };
+
+		// Maps CHIP8 keyboard to their values
+		int keyMap[] = { 1, 2, 3, 0xC, 4, 5, 6, 0xD, 7, 8, 9, 0xE, 0xA, 0, 0xB, 0xF };
+		for (int i = 0; i < 16; i++)
 		{
-			keyRect.x = (i % 4) * 52;
-			keyRect.y = (i / 4) * 52 + 512;
-			SDL_RenderFillRect(renderer, &keyRect);
+			if (chip8->keyStates[keyMap[i]])
+			{
+				keyRect.x = (i % 4) * 52;
+				keyRect.y = (i / 4) * 52 + 512;
+				SDL_RenderFillRect(renderer, &keyRect);
+			}
 		}
 	}
 

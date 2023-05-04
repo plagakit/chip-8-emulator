@@ -44,7 +44,7 @@ bool Emulator::Init()
 
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	font = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 18.0f);
+	font = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 22.0f);
 	fontBig = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 32.0f);
 
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -83,6 +83,46 @@ void Emulator::HandleEvents()
 
 void Emulator::Update()
 {	
+	// UPDATE CHIP 8
+	if (chip8 != nullptr && !paused)
+	{
+		// Update key states
+		const Uint8* kb = SDL_GetKeyboardState(NULL);
+		chip8->keyStates[0x1] = kb[SDL_SCANCODE_1];
+		chip8->keyStates[0x2] = kb[SDL_SCANCODE_2];
+		chip8->keyStates[0x3] = kb[SDL_SCANCODE_3];
+		chip8->keyStates[0xC] = kb[SDL_SCANCODE_4];
+		chip8->keyStates[0x4] = kb[SDL_SCANCODE_Q];
+		chip8->keyStates[0x5] = kb[SDL_SCANCODE_W];
+		chip8->keyStates[0x6] = kb[SDL_SCANCODE_E];
+		chip8->keyStates[0xD] = kb[SDL_SCANCODE_R];
+		chip8->keyStates[0x7] = kb[SDL_SCANCODE_A];
+		chip8->keyStates[0x8] = kb[SDL_SCANCODE_S];
+		chip8->keyStates[0x9] = kb[SDL_SCANCODE_D];
+		chip8->keyStates[0xE] = kb[SDL_SCANCODE_F];
+		chip8->keyStates[0xA] = kb[SDL_SCANCODE_Z];
+		chip8->keyStates[0x0] = kb[SDL_SCANCODE_X];
+		chip8->keyStates[0xB] = kb[SDL_SCANCODE_C];
+		chip8->keyStates[0xF] = kb[SDL_SCANCODE_V];
+
+		// Decrement DT/ST register if 1/60 secs (16.66 ms) has passed
+		Uint64 time = SDL_GetTicks64();
+		if (time - delayTime > 16 && chip8->DT > 0)
+		{
+			delayTime = time;
+			chip8->DT--;
+		}
+		if (time - soundTime > 16 && chip8->ST > 0)
+		{
+			soundTime = time;
+			chip8->ST--;
+		}
+
+		// Do a cycle
+		chip8->Cycle();
+	}
+	
+	// UPDATE GUI
 	ImGui_ImplSDLRenderer_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
@@ -93,7 +133,7 @@ void Emulator::Update()
 	ImGui::SetNextWindowSize(ImVec2(256, 720), ImGuiCond_Always);
 
 	ImGui::Begin("Settings", &mainWindow, flags);
-	
+
 	ImGui::ShowDemoWindow();
 
 	// LOAD ROM BUTTON
@@ -113,6 +153,7 @@ void Emulator::Update()
 			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
 			romName = ImGuiFileDialog::Instance()->GetCurrentFileName();
 			chip8 = new CHIP8(filePath.c_str());
+			paused = false;
 		}
 		ImGuiFileDialog::Instance()->Close();
 	}
@@ -134,57 +175,29 @@ void Emulator::Update()
 			paused = !paused;
 
 		ImGui::SameLine();
-		
+
 		if (!paused)
 			ImGui::BeginDisabled();
 
 		if (ImGui::Button("Cycle", ImVec2(116, 40)))
 			chip8->Cycle();
-		
+
 		if (!paused) ImGui::EndDisabled();
 	}
 
+	// PC & instructions
+	if (chip8 != nullptr)
+	{
+		ImGui::Text("PC: 0x%04X", chip8->PC);
+
+		ImGui::Text("Instructions");
+		ImGui::BeginChild("Instructions", ImVec2(240, 300), true);
+		for (std::string s : chip8->instructionList)
+			ImGui::Text("%s", s.c_str());
+		ImGui::EndChild();
+	}
+
 	ImGui::End();
-
-	
-	// UPDATE CHIP 8
-	if (chip8 == nullptr || paused)
-		return;
-	
-	// Update key states
-	const Uint8* kb = SDL_GetKeyboardState(NULL);
-	chip8->keyStates[0x1] = kb[SDL_SCANCODE_1];
-	chip8->keyStates[0x2] = kb[SDL_SCANCODE_2];
-	chip8->keyStates[0x3] = kb[SDL_SCANCODE_3];
-	chip8->keyStates[0xC] = kb[SDL_SCANCODE_4];
-	chip8->keyStates[0x4] = kb[SDL_SCANCODE_Q];
-	chip8->keyStates[0x5] = kb[SDL_SCANCODE_W];
-	chip8->keyStates[0x6] = kb[SDL_SCANCODE_E];
-	chip8->keyStates[0xD] = kb[SDL_SCANCODE_R];
-	chip8->keyStates[0x7] = kb[SDL_SCANCODE_A];
-	chip8->keyStates[0x8] = kb[SDL_SCANCODE_S];
-	chip8->keyStates[0x9] = kb[SDL_SCANCODE_D];
-	chip8->keyStates[0xE] = kb[SDL_SCANCODE_F];
-	chip8->keyStates[0xA] = kb[SDL_SCANCODE_Z];
-	chip8->keyStates[0x0] = kb[SDL_SCANCODE_X];
-	chip8->keyStates[0xB] = kb[SDL_SCANCODE_C];
-	chip8->keyStates[0xF] = kb[SDL_SCANCODE_V];
-	
-	// Decrement DT/ST register if 1/60 secs (16.66 ms) has passed
-	Uint64 time = SDL_GetTicks64();
-	if (time - delayTime > 16 && chip8->DT > 0)
-	{
-		delayTime = time;
-		chip8->DT--;
-	}
-	if (time - soundTime > 16 && chip8->ST > 0)
-	{
-		soundTime = time;
-		chip8->ST--;
-	}
-
-	// Do a cycle
-	chip8->Cycle();
 }
 
 void Emulator::Render()

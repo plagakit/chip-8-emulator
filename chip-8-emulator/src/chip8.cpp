@@ -1,6 +1,7 @@
 ﻿#include "chip8.h"
 
 #include <iostream>
+#include <format>
 
 CHIP8::CHIP8(const char* path)
 {	
@@ -61,13 +62,13 @@ void CHIP8::Cycle()
 
 	PC += 2; // move program counter to next instruction
 
-	//printf("Running %04x: ", opcode);
+	std::string instStr = std::format("> {:04X} - ", opcode);
 
 	// 00E0 - CLS
 	// Clear the screen.
 	if (opcode == 0x00E0)
 	{
-		//printf("Clear screen");
+		instStr += "CLS";
 		for (int i = 0; i < 32; i++)
 			for (int j = 0; j < 64; j++)
 				display[i][j] = 0;
@@ -80,14 +81,14 @@ void CHIP8::Cycle()
 		WORD ret = stack.top();
 		stack.pop();
 		PC = ret;
-		//printf("Pop last address on stack and set PC to %04x", ret);
+		instStr += "RET";//std::format("Pop last address on stack and set PC to {:04X}", ret);
 	}
 
 	// 1NNN - JMP addr
 	// Sets PC to addr.
 	else if ((b1 >> 4) == 1)
 	{
-		//printf("Jump to %03x", addr);
+		instStr += std::format("JMP {:04X}", addr);
 		PC = addr;
 	}
 
@@ -95,7 +96,7 @@ void CHIP8::Cycle()
 	// Puts current PC on stack then sets PC to addr, (effectively calls a function at addr)
 	else if ((b1 >> 4) == 2)
 	{
-		//printf("Push %04x to stack", PC);
+		instStr += std::format("CALL {:04X}", PC);
 		stack.push(PC);
 		PC = addr;
 	}
@@ -104,7 +105,7 @@ void CHIP8::Cycle()
 	// Skips next instruction if Vx = nn
 	else if ((b1 >> 4) == 3)
 	{
-		//printf("Skip if V[%02x] (%02x) == %02x", x, V[x], b2);
+		instStr += std::format("SE V[{:01X}] ({:02X}), {:02X}", x, V[x], b2);
 		if (V[x] == b2)
 			PC += 2;
 	}
@@ -113,7 +114,7 @@ void CHIP8::Cycle()
 	// Skips next instruction if Vx != nn
 	else if ((b1 >> 4) == 4)
 	{
-		//printf("Skip if V[%02x] (%02x) != %02x", x, V[x], b2);
+		instStr += std::format("SNE V[{:01X}] ({:02X}), {:02X}", x, V[x], b2);
 		if (V[x] != b2)
 			PC += 2;
 	}
@@ -122,7 +123,7 @@ void CHIP8::Cycle()
 	// Skips next instruction if Vx = Vy
 	else if ((b1 >> 4) == 5)
 	{
-		//printf("Skip if V[%02x] (%02x) == V[%02x] (%02x)", x, V[x], y, V[y]);
+		instStr += std::format("SE V[{:01X}] ({:02X}), V[{:01X}] ({:02X})", x, V[x], y, V[y]);
 		if (V[x] == V[y])
 			PC += 2;
 	}
@@ -131,7 +132,7 @@ void CHIP8::Cycle()
 	// Set xth register in V to byte
 	else if ((b1 >> 4) == 6)
 	{
-		//printf("Set V[%d] to %02x", x, b2);
+		instStr += std::format("LD V[{:01X}], {:02X}", x, b2);
 		V[x] = b2;
 	}
 
@@ -139,7 +140,7 @@ void CHIP8::Cycle()
 	// Add byte to register x
 	else if ((b1 >> 4) == 7)
 	{
-		//printf("Add V[%d] with %02x", x, b2);
+		instStr += std::format("ADD V[{:01X}], {:02X}", x, b2);
 		V[x] = V[x] + b2;
 	}
 
@@ -147,7 +148,7 @@ void CHIP8::Cycle()
 	// Skips next instruction if Vx != Vy
 	else if ((b1 >> 4) == 9)
 	{
-		//printf("Skip if V[%02x] (%02x) != V[%02x] (%02x)", x, V[x], y, V[y]);
+		instStr += std::format("SNE V[{:01X}] ({:02X}), V[{:01X}] ({:02X})", x, V[x], y, V[y]);
 		if (V[x] != V[y])
 			PC += 2;
 	}
@@ -159,6 +160,7 @@ void CHIP8::Cycle()
 		// Set Vx = Vy
 		if (n == 0)
 		{
+			instStr += std::format("LD V[{:01X}], V[{:01X}]", x, y);
 			V[x] = V[y];
 		}
 
@@ -166,6 +168,7 @@ void CHIP8::Cycle()
 		// Set Vx = Vx OR Vy
 		else if (n == 1)
 		{
+			instStr += std::format("OR V[{:01X}], V[{:01X}]", x, y);
 			V[x] = V[x] | V[y];
 		}
 
@@ -173,6 +176,7 @@ void CHIP8::Cycle()
 		// Set Vx = Vx AND Vy
 		else if (n == 2)
 		{
+			instStr += std::format("AND V[{:01X}], V[{:01X}]", x, y);
 			V[x] = V[x] & V[y];
 		}
 
@@ -180,6 +184,7 @@ void CHIP8::Cycle()
 		// Set Vx = Vx XOR Vy
 		else if (n == 3)
 		{
+			instStr += std::format("XOR V[{:01X}], V[{:01X}]", x, y);
 			V[x] = V[x] ^ V[y];
 		}
 
@@ -187,6 +192,7 @@ void CHIP8::Cycle()
 		// Set Vx = Vx + Vy, set VF = carry bit if overflowed
 		else if (n == 4)
 		{
+			instStr += std::format("ADD V[{:01X}], V[{:01X}]", x, y);
 			int overflow = (int)(V[x]) + (int)(V[y]) > 0xFF;
 			V[x] = V[x] + V[y];
 			V[0xF] = overflow;
@@ -196,6 +202,7 @@ void CHIP8::Cycle()
 		// Set Vx =	Vx - Vy, set Vf = NOT borrow (if Vx >= Vy)
 		else if (n == 5)
 		{
+			instStr += std::format("SUB V[{:01X}], V[{:01X}]", x, y);
 			int borrow = !(V[x] < V[y]);
 			V[x] = V[x] - V[y];
 			V[0xF] = borrow;
@@ -205,6 +212,7 @@ void CHIP8::Cycle()
 		// (Ambiguous) Shift Vx right by 1, set Vf = shifted out bit
 		else if (n == 6)
 		{
+			instStr += std::format("SHR V[{:01X}]", x);
 			V[0xF] = V[x] & 1; // rightmost bit
 			V[x] >>= 1;
 		}
@@ -213,6 +221,7 @@ void CHIP8::Cycle()
 		// Set Vx = Vy - Vx, set Vf = NOT borrow (if Vy > Vx)
 		else if (n == 7)
 		{
+			instStr += std::format("SUBN V[{:01X}], V[{:01X}]", y, x);
 			V[x] = V[y] - V[x];
 			V[0xF] = V[y] > V[x];
 		}
@@ -221,6 +230,7 @@ void CHIP8::Cycle()
 		// (Ambiguous) Shift Vx left by 1, set Vf = shifted out bit
 		else if (n == 0xE)
 		{
+			instStr += std::format("SHL V[{:01X}]", x);
 			V[0xF] = V[x] & 128; // leftmost bit in byte
 			V[x] <<= 1;
 		}
@@ -230,7 +240,7 @@ void CHIP8::Cycle()
 	// Set index register to addr
 	else if ((b1 >> 4) == 0xA)
 	{
-		//printf("Set I reg to %03x", addr);
+		instStr += std::format("LD I, {:04X}", addr);
 		I = addr;
 	}
 
@@ -238,6 +248,7 @@ void CHIP8::Cycle()
 	// (Ambiguous, went with old CHIP-8) Program counter is set to addr plus V0
 	else if ((b1 >> 4) == 0xB)
 	{
+		instStr += std::format("JMP V0, {:04X}", addr);
 		PC = addr + V[0];
 	}
 
@@ -245,6 +256,8 @@ void CHIP8::Cycle()
 	// Set Vx = random byte AND nn
 	else if ((b1 >> 4) == 0xC)
 	{
+		instStr += std::format("RND V[{:01X}], {:02X}", x, b2);
+		
 		static std::random_device rd;
 		static std::mt19937 rng(rd());
 		std::uniform_int_distribution<> randByte(0, 256);
@@ -260,7 +273,7 @@ void CHIP8::Cycle()
 		BYTE py = V[y];// % 32;
 		V[0xF] = 0; // set collision to false
 
-		//printf("Draw (I = %03x)", I);
+		instStr += std::format("DRW V[{:01X}], V[{:01X}], {:02X}", x, y, n);
 
 		for (int i = 0; i < n; i++)
 		{
@@ -299,6 +312,7 @@ void CHIP8::Cycle()
 	// Skip next instruction if key w/ value of Vx is pressed
 	else if ((b1 >> 4) == 0xE && b2 == 0x9E)
 	{
+		instStr += std::format("SKP V[{:01X}]", x);
 		if (keyStates[V[x]])
 			PC += 2;
 	}
@@ -307,6 +321,7 @@ void CHIP8::Cycle()
 	// Skip next instruction if key w/ value of Vx is NOT pressed
 	else if ((b1 >> 4) == 0xE && b2 == 0xA1)
 	{
+		instStr += std::format("SKNP V[{:01X}]", x);
 		if (!keyStates[V[x]])
 			PC += 2;
 	}
@@ -315,6 +330,7 @@ void CHIP8::Cycle()
 	// Set Vx to the current value of the delay timer
 	else if ((b1 >> 4) == 0xF && b2 == 0x07)
 	{
+		instStr += std::format("LD V[{:01X}], DT", x);
 		V[x] = DT;
 	}
 
@@ -322,6 +338,7 @@ void CHIP8::Cycle()
 	// Blocks instructions until a key is pressed, key stored in Vx
 	else if ((b1 >> 4) == 0xF && b2 == 0x0A)
 	{
+		instStr += std::format("BLK V[{:01X}", x);
 		if (!keyStates[V[x]])
 			PC -= 2;
 	}
@@ -330,6 +347,7 @@ void CHIP8::Cycle()
 	// Set delay timer to value in Vx
 	else if ((b1 >> 4) == 0xF && b2 == 0x15)
 	{
+		instStr += std::format("LD DT, V[{:01X}]", x);
 		DT = V[x];
 	}
 
@@ -337,6 +355,7 @@ void CHIP8::Cycle()
 	// Set sound timer to value in Vx
 	else if ((b1 >> 4) == 0xF && b2 == 0x18)
 	{
+		instStr += std::format("LD ST, V[{:01X}]", x);
 		ST = V[x];
 	}
 
@@ -344,6 +363,7 @@ void CHIP8::Cycle()
 	// Set I = I + Vx, set Vf = overflow
 	else if ((b1 >> 4) == 0xF && b2 == 0x1E)
 	{
+		instStr += std::format("ADD I, V[{:01X}]", x);
 		I = I + V[x];
 		V[0xF] = (int)I + (int)V[x] > 0xFFF;
 	}
@@ -352,6 +372,7 @@ void CHIP8::Cycle()
 	// Set I = location of font sprite for digit Vx
 	else if ((b1 >> 4) == 0xF && b2 == 0x29)
 	{
+		instStr += std::format("LD I, font of V[{:01X}]", x);
 		I = 0x50 + V[x] * 6; // font sprite is 6 bytes
 	}
 
@@ -359,6 +380,7 @@ void CHIP8::Cycle()
 	// Stores the 3 digits of the integer representation of Vx @ I, I+1 and I+2
 	else if ((b1 >> 4) == 0xF && b2 == 0x33)
 	{
+		instStr += std::format("LD I, digits of V[{:01X}]", x);
 		RAM[I] = (V[x] / 100) % 10;
 		RAM[I + 1] = (V[x] / 10) % 10;
 		RAM[I + 2] = V[x] % 10;
@@ -369,6 +391,7 @@ void CHIP8::Cycle()
 	else if ((b1 >> 4) == 0xF && b2 == 0x55)
 	{
 		//printf("Store V0-V%x to I\n", V[x]);
+		instStr += std::format("LD [I], V0-V[{:01X}]", x);
 		for (int i = 0; i <= x; i++)
 			RAM[I + i] = V[i];
 	}
@@ -377,14 +400,19 @@ void CHIP8::Cycle()
 	// (Ambiguous) Loads values from I-I+x into V0-Vx inclusive (without changing I)
 	else if ((b1 >> 4) == 0xF && b2 == 0x65)
 	{
+		instStr += std::format("LD V0-V[{:01X}], [I]", x);
 		for (int i = 0; i <= x; i++)
 			V[i] = RAM[I + i];
 	}
 
-	//else
-	//{
-		//printf("Unknown instruction - %04x", opcode);
-	//}
+	else
+	{
+		instStr += std::format("UNKNOWN");
+	}
 
 	//printf("\n");
+
+	instructionList.push_front(instStr);
+	if (instructionList.size() > 100)
+		instructionList.pop_back();
 }

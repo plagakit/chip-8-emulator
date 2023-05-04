@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <stack>
 #include <random>
+#include <string>
+#include <deque>
 
 class CHIP8 {
 
@@ -34,7 +36,7 @@ public:
 
 	BYTE V[16]; // variable registers 0 - F
 
-	std::string curInstruction;
+	std::deque<std::string> instructionList;
 	bool keyStates[16];
 
 	/*

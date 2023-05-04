@@ -2,7 +2,7 @@
 
 bool Emulator::Init()
 {
-	chip8 = nullptr;// new CHIP8("..\\roms\\slipperyslope.ch8");
+	chip8 = new CHIP8("..\\roms\\slipperyslope.ch8");
 	delayTime = SDL_GetTicks64();
 	soundTime = SDL_GetTicks64();
 
@@ -127,12 +127,20 @@ void Emulator::Update()
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove;
-	bool mainWindow = true;
-	ImGui::SetNextWindowPos(ImVec2(1024, 0), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(256, 720), ImGuiCond_Always);
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
 
-	ImGui::Begin("Settings", &mainWindow, flags);
+	// Bottom left pane
+	ImGui::SetNextWindowPos(ImVec2(0, 512));
+	ImGui::SetNextWindowSize(ImVec2(1280, 208));
+	ImGui::Begin("LeftPane", NULL, flags);
+
+	ImGui::End();
+
+
+	// Right pane
+	ImGui::SetNextWindowPos(ImVec2(1024, 0));
+	ImGui::SetNextWindowSize(ImVec2(256, 720));
+	ImGui::Begin("RightPane", NULL, flags);
 
 	ImGui::ShowDemoWindow();
 
@@ -188,13 +196,21 @@ void Emulator::Update()
 	// PC & instructions
 	if (chip8 != nullptr)
 	{
-		ImGui::Text("PC: 0x%04X", chip8->PC);
+		ImGui::Text("PC: 0x%03X", chip8->PC);
 
 		ImGui::Text("Instructions");
-		ImGui::BeginChild("Instructions", ImVec2(240, 300), true);
+		ImGui::BeginChild("Instructions", ImVec2(240, 472), true);
 		for (std::string s : chip8->instructionList)
 			ImGui::Text("%s", s.c_str());
 		ImGui::EndChild();
+
+		ImGui::Text("Stack Length: %d", chip8->stack.size());
+		ImGui::Text("Stack Top:");
+		if (chip8->stack.size() > 0)
+		{
+			ImGui::SameLine();
+			ImGui::Text("0x%03X", chip8->stack.top());
+		}
 	}
 
 	ImGui::End();

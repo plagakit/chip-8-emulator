@@ -1,8 +1,13 @@
 #pragma once
 
-#include <SDL.h>
 #include <string>
 #include <memory>
+
+#include <SDL.h>
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer.h"
+#include "ImGuiFileDialog.h"
+
 #include "chip8.h"
 
 class Emulator {
@@ -28,9 +33,14 @@ private:
 	SDL_Surface* surface;
 	SDL_Renderer* renderer;
 
-	SDL_Rect pixel;
-	CHIP8* chip8;
 	bool running;
+	CHIP8* chip8;
+	bool paused;
 	Uint64 delayTime, soundTime;
+
+	SDL_Rect pixel;
+	ImFont* font;
+	ImFont* fontBig;
+	std::string romName;
 
 };

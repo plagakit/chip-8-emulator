@@ -1,15 +1,13 @@
 #include "emulator.h"
 
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer.h"
-#include "ImGuiFileDialog.h"
-
 bool Emulator::Init()
 {
 	chip8 = nullptr;// new CHIP8("..\\roms\\slipperyslope.ch8");
-	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
 	delayTime = SDL_GetTicks64();
 	soundTime = SDL_GetTicks64();
+
+	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
+	paused = false;
 
 	// Init SDL
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0)
@@ -46,10 +44,11 @@ bool Emulator::Init()
 
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	font = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 18.0f);
+	fontBig = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 32.0f);
 
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	ImGui_ImplSDLRenderer_Init(renderer);
-
 
 	running = true;
 	return true;
@@ -95,8 +94,14 @@ void Emulator::Update()
 
 	ImGui::Begin("Settings", &mainWindow, flags);
 	
+	ImGui::ShowDemoWindow();
+
 	// LOAD ROM BUTTON
-	if (ImGui::Button("Load ROM", ImVec2(240, 50)))
+	ImGui::PushFont(fontBig);
+	bool buttonClicked = ImGui::Button("Load ROM", ImVec2(240, 50));
+	ImGui::PopFont();
+
+	if (buttonClicked)
 	{
 		printf("Clicked button!\n");
 		ImGuiFileDialog::Instance()->OpenDialog("ChooseRom", "Choose File", ".ch8", ".");
@@ -106,16 +111,44 @@ void Emulator::Update()
 		if (ImGuiFileDialog::Instance()->IsOk())
 		{
 			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+			romName = ImGuiFileDialog::Instance()->GetCurrentFileName();
 			chip8 = new CHIP8(filePath.c_str());
 		}
 		ImGuiFileDialog::Instance()->Close();
 	}
-	
+	ImGui::Text("%s", romName.c_str());
+
+	// Pause/step buttons
+	if (chip8 == nullptr)
+	{
+		ImGui::BeginDisabled();
+		ImGui::Button("Pause", ImVec2(116, 40));
+		ImGui::SameLine();
+		ImGui::Button("Cycle", ImVec2(116, 40));
+		ImGui::EndDisabled();
+	}
+	else
+	{
+		std::string pauseText = paused ? "Resume" : "Pause";
+		if (ImGui::Button(pauseText.c_str(), ImVec2(116, 40)))
+			paused = !paused;
+
+		ImGui::SameLine();
+		
+		if (!paused)
+			ImGui::BeginDisabled();
+
+		if (ImGui::Button("Cycle", ImVec2(116, 40)))
+			chip8->Cycle();
+		
+		if (!paused) ImGui::EndDisabled();
+	}
+
 	ImGui::End();
 
 	
 	// UPDATE CHIP 8
-	if (chip8 == nullptr)
+	if (chip8 == nullptr || paused)
 		return;
 	
 	// Update key states

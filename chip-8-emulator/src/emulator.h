@@ -41,7 +41,7 @@ private:
 
 	SDL_Rect pixel;
 	ImFont* font;
-	ImFont* fontKeymap;
+	ImFont* fontMedium;
 	ImFont* fontBig;
 	std::string romName;
 

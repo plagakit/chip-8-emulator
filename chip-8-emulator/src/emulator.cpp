@@ -45,7 +45,7 @@ bool Emulator::Init()
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	font = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 22.0f);
-	fontKeymap = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 28.0f);
+	fontMedium = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 28.0f);
 	fontBig = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 32.0f);
 
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -140,7 +140,7 @@ void Emulator::Update()
 		| ImGuiWindowFlags_NoBackground 
 		| ImGuiWindowFlags_NoScrollbar 
 		| ImGuiWindowFlags_NoScrollWithMouse);
-	ImGui::PushFont(fontKeymap);
+	ImGui::PushFont(fontMedium);
 
 	char keys[] = { '1','2','3','4','Q','W','E','R','A','S','D','F','Z','X','C','V'};
 	char chars[] = { '1', '2', '3', 'C', '4', '5', '6', 'D', '7', '8', '9', 'E', 'A', '0', 'B', 'F' };
@@ -171,27 +171,74 @@ void Emulator::Update()
 	ImGui::End();
 
 
-	// Bottom pane
+	// Timers
 	ImGui::SetNextWindowPos(ImVec2(208, 512));
-	ImGui::SetNextWindowSize(ImVec2(1072, 208));
-	ImGui::Begin("BottomPane", NULL, flags);
-
-	ImGui::BeginChild("Timers", ImVec2(208, 208), false);
+	ImGui::SetNextWindowSize(ImVec2(208, 208));
+	ImGui::Begin("TimerWindow", NULL, flags);
 
 	if (chip8 != nullptr)
 	{
-		float dtProgress = (float)chip8->DT / 15;
-		ImU32 dtCol = IM_COL32(0, 255 * dtProgress, 0, 255);
-
+		ImGui::PushFont(fontMedium);
 		auto drawList = ImGui::GetWindowDrawList();
 
-		ImVec2 p0 = ImGui::GetCursorScreenPos();
-		ImVec2 p1 = ImVec2(p0.x + 208, p0.y + 208);
-		drawList->AddRectFilled(p0, p1, dtCol);
-	}
-	ImGui::EndChild();
+		ImGui::Text("Delay Timer: 0x%02x", chip8->DT);
 
+		float dtProgress = (float)chip8->DT / 15;
+		ImVec2 p0 = ImGui::GetCursorScreenPos();
+		ImVec2 p1 = ImVec2(p0.x + dtProgress * 208, p0.y + 50);
+		ImVec2 p1n = ImVec2(p0.x + 208, p0.y + 50);
+		drawList->AddRectFilled(p0, p1n, IM_COL32(65, 60, 60, 255));
+		drawList->AddRectFilled(p0, p1, IM_COL32(0, 255, 0, 255));
+
+		ImGui::SetCursorScreenPos(ImVec2(p0.x, p0.y + 65));
+		ImGui::Text("Sound Timer: 0x%02x", chip8->ST);
+
+		float stProgress = (float)chip8->ST / 15;
+		ImVec2 p2 = ImGui::GetCursorScreenPos();
+		ImVec2 p3 = ImVec2(p2.x + stProgress * 208, p2.y + 50);
+		ImVec2 p3n = ImVec2(p2.x + 208, p2.y + 50);
+		drawList->AddRectFilled(p2, p3n, IM_COL32(65, 60, 60, 255));
+		drawList->AddRectFilled(p2, p3, IM_COL32(0, 255, 0, 255));
+
+		ImGui::PopFont();
+	}
 	ImGui::End();
+
+	// Registers
+	ImGui::SetNextWindowPos(ImVec2(208 * 2, 512));
+	ImGui::SetNextWindowSize(ImVec2(608, 208));
+	ImGui::Begin("RegisterWindow", NULL, flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+	ImGui::PushFont(fontMedium);
+
+	if (ImGui::BeginTable("RegistersTable", 6, tableFlags, ImVec2(608, 208)))
+	{
+		for (int row = 0; row < 3; row++)
+		{
+
+			ImGui::TableNextRow(0, 64);
+			for (int col = 0; col < 6; col++)
+			{
+				ImGui::TableSetColumnIndex(col);
+
+				if (row * 6 + col > 0xF)
+					continue;
+
+				int i = row * 6 + col;
+				unsigned char val = 'a';
+				if (chip8 != nullptr)
+					val = chip8->V[i];
+
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
+				ImGui::Text("V[%01X]\n0x%02X", i, val);
+			}
+		}
+		ImGui::EndTable();
+	}
+	ImGui::PopFont();
+	ImGui::End();
+
+	// Sprite
+
 
 
 	// Right pane
@@ -199,7 +246,7 @@ void Emulator::Update()
 	ImGui::SetNextWindowSize(ImVec2(256, 720));
 	ImGui::Begin("RightPane", NULL, flags);
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	// LOAD ROM BUTTON
 	ImGui::PushFont(fontBig);

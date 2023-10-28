@@ -24,6 +24,7 @@ public:
 
 	void HandleEvents();
 	void Update();
+	void UpdateCHIP8();
 	void Render();
 
 	bool IsRunning();
@@ -40,6 +41,7 @@ private:
 
 	SDL_Rect pixel;
 	ImFont* font;
+	ImFont* fontKeymap;
 	ImFont* fontBig;
 	std::string romName;
 

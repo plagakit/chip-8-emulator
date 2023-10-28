@@ -45,6 +45,7 @@ bool Emulator::Init()
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	font = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 22.0f);
+	fontKeymap = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 28.0f);
 	fontBig = io.Fonts->AddFontFromFileTTF("lib\\Segoe-UI-Variable.ttf", 32.0f);
 
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -81,46 +82,49 @@ void Emulator::HandleEvents()
 	}
 }
 
+void Emulator::UpdateCHIP8()
+{
+	// UPDATE CHIP 8
+	// Update key states
+	const Uint8* kb = SDL_GetKeyboardState(NULL);
+	chip8->keyStates[0x1] = kb[SDL_SCANCODE_1];
+	chip8->keyStates[0x2] = kb[SDL_SCANCODE_2];
+	chip8->keyStates[0x3] = kb[SDL_SCANCODE_3];
+	chip8->keyStates[0xC] = kb[SDL_SCANCODE_4];
+	chip8->keyStates[0x4] = kb[SDL_SCANCODE_Q];
+	chip8->keyStates[0x5] = kb[SDL_SCANCODE_W];
+	chip8->keyStates[0x6] = kb[SDL_SCANCODE_E];
+	chip8->keyStates[0xD] = kb[SDL_SCANCODE_R];
+	chip8->keyStates[0x7] = kb[SDL_SCANCODE_A];
+	chip8->keyStates[0x8] = kb[SDL_SCANCODE_S];
+	chip8->keyStates[0x9] = kb[SDL_SCANCODE_D];
+	chip8->keyStates[0xE] = kb[SDL_SCANCODE_F];
+	chip8->keyStates[0xA] = kb[SDL_SCANCODE_Z];
+	chip8->keyStates[0x0] = kb[SDL_SCANCODE_X];
+	chip8->keyStates[0xB] = kb[SDL_SCANCODE_C];
+	chip8->keyStates[0xF] = kb[SDL_SCANCODE_V];
+
+	// Decrement DT/ST register if 1/60 secs (16.66 ms) has passed
+	Uint64 time = SDL_GetTicks64();
+	if (time - delayTime > 16 && chip8->DT > 0)
+	{
+		delayTime = time;
+		chip8->DT--;
+	}
+	if (time - soundTime > 16 && chip8->ST > 0)
+	{
+		soundTime = time;
+		chip8->ST--;
+	}
+
+	// Do a cycle
+	chip8->Cycle();
+}
+
 void Emulator::Update()
 {	
-	// UPDATE CHIP 8
 	if (chip8 != nullptr && !paused)
-	{
-		// Update key states
-		const Uint8* kb = SDL_GetKeyboardState(NULL);
-		chip8->keyStates[0x1] = kb[SDL_SCANCODE_1];
-		chip8->keyStates[0x2] = kb[SDL_SCANCODE_2];
-		chip8->keyStates[0x3] = kb[SDL_SCANCODE_3];
-		chip8->keyStates[0xC] = kb[SDL_SCANCODE_4];
-		chip8->keyStates[0x4] = kb[SDL_SCANCODE_Q];
-		chip8->keyStates[0x5] = kb[SDL_SCANCODE_W];
-		chip8->keyStates[0x6] = kb[SDL_SCANCODE_E];
-		chip8->keyStates[0xD] = kb[SDL_SCANCODE_R];
-		chip8->keyStates[0x7] = kb[SDL_SCANCODE_A];
-		chip8->keyStates[0x8] = kb[SDL_SCANCODE_S];
-		chip8->keyStates[0x9] = kb[SDL_SCANCODE_D];
-		chip8->keyStates[0xE] = kb[SDL_SCANCODE_F];
-		chip8->keyStates[0xA] = kb[SDL_SCANCODE_Z];
-		chip8->keyStates[0x0] = kb[SDL_SCANCODE_X];
-		chip8->keyStates[0xB] = kb[SDL_SCANCODE_C];
-		chip8->keyStates[0xF] = kb[SDL_SCANCODE_V];
-
-		// Decrement DT/ST register if 1/60 secs (16.66 ms) has passed
-		Uint64 time = SDL_GetTicks64();
-		if (time - delayTime > 16 && chip8->DT > 0)
-		{
-			delayTime = time;
-			chip8->DT--;
-		}
-		if (time - soundTime > 16 && chip8->ST > 0)
-		{
-			soundTime = time;
-			chip8->ST--;
-		}
-
-		// Do a cycle
-		chip8->Cycle();
-	}
+		UpdateCHIP8();
 	
 	// UPDATE GUI
 	ImGui_ImplSDLRenderer_NewFrame();
@@ -129,10 +133,63 @@ void Emulator::Update()
 
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
 
-	// Bottom left pane
+	// Bottom left keymap pane
 	ImGui::SetNextWindowPos(ImVec2(0, 512));
-	ImGui::SetNextWindowSize(ImVec2(1280, 208));
-	ImGui::Begin("LeftPane", NULL, flags);
+	ImGui::SetNextWindowSize(ImVec2(208, 208));
+	ImGui::Begin("KeymapPane", NULL, flags 
+		| ImGuiWindowFlags_NoBackground 
+		| ImGuiWindowFlags_NoScrollbar 
+		| ImGuiWindowFlags_NoScrollWithMouse);
+	ImGui::PushFont(fontKeymap);
+
+	char keys[] = { '1','2','3','4','Q','W','E','R','A','S','D','F','Z','X','C','V'};
+	char chars[] = { '1', '2', '3', 'C', '4', '5', '6', 'D', '7', '8', '9', 'E', 'A', '0', 'B', 'F' };
+	ImGuiTableFlags tableFlags = ImGuiTableFlags_SizingStretchSame;
+
+	if (ImGui::BeginTable("KeymapTable", 4, tableFlags, ImVec2(208, 208)))
+	{
+		for (int row = 0; row < 4; row++)
+		{
+			
+			ImGui::TableNextRow(0, 52);
+			for (int col = 0; col < 4; col++)
+			{
+				ImGui::TableSetColumnIndex(col);
+
+				// Center text
+				auto windowWidth = 52;
+				auto textWidth = ImGui::CalcTextSize("O").x;
+				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f + 52 * col);
+
+				ImGui::Text("%c", keys[row * 4 + col]);
+			}
+		}
+		ImGui::EndTable();
+	}
+	ImGui::PopFont();
+
+	ImGui::End();
+
+
+	// Bottom pane
+	ImGui::SetNextWindowPos(ImVec2(208, 512));
+	ImGui::SetNextWindowSize(ImVec2(1072, 208));
+	ImGui::Begin("BottomPane", NULL, flags);
+
+	ImGui::BeginChild("Timers", ImVec2(208, 208), false);
+
+	if (chip8 != nullptr)
+	{
+		float dtProgress = (float)chip8->DT / 15;
+		ImU32 dtCol = IM_COL32(0, 255 * dtProgress, 0, 255);
+
+		auto drawList = ImGui::GetWindowDrawList();
+
+		ImVec2 p0 = ImGui::GetCursorScreenPos();
+		ImVec2 p1 = ImVec2(p0.x + 208, p0.y + 208);
+		drawList->AddRectFilled(p0, p1, dtCol);
+	}
+	ImGui::EndChild();
 
 	ImGui::End();
 
@@ -188,7 +245,7 @@ void Emulator::Update()
 			ImGui::BeginDisabled();
 
 		if (ImGui::Button("Cycle", ImVec2(116, 40)))
-			chip8->Cycle();
+			UpdateCHIP8();
 
 		if (!paused) ImGui::EndDisabled();
 	}

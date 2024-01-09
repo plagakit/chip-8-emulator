@@ -35,7 +35,7 @@ include_directories(
 )
 add_executable(chip-8-emulator
     "src/main.cpp"
-    "src/emulator.cpp"
+    "src/window.cpp"
     "src/chip8.cpp"
     "lib/ImGuiFileDialog/ImGuiFileDialog.cpp"
 )

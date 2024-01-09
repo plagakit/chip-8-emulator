@@ -1,6 +1,7 @@
 ﻿#include "chip8.h"
-#define FMT_HEADER_ONLY
+
 #include <iostream>
+#define FMT_HEADER_ONLY
 #include <fmt/core.h>
 
 CHIP8::CHIP8(const char* path)
@@ -18,14 +19,14 @@ CHIP8::CHIP8(const char* path)
 	BYTE buffer[gameSize];
 	fread(buffer, sizeof(buffer), 1, file);
 
-	LoadFromBuffer(buffer);
+	InitFromBuffer(buffer);
 }
 
-void CHIP8::LoadFromBuffer(BYTE* buffer)
+void CHIP8::InitFromBuffer(BYTE* rom)
 {
 	// Load ROM & font into RAM
 	for (int i = 0; i < 0xE00; i++)
-		RAM[0x200 + i] = buffer[i];
+		RAM[0x200 + i] = rom[i];
 
 	for (int i = 0; i < sizeof(font) / sizeof(font[0]); i++)
 		RAM[0x050 + i] = font[i];

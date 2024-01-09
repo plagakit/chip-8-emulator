@@ -1,11 +1,11 @@
-#include "emulator.h"
+#include "window.h"
 #include <iostream>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
 
-Emulator emulator;
+Window emulator;
 
 void EmulatorLoop()
 {

@@ -10,7 +10,7 @@
 
 #include "chip8.h"
 
-class Emulator {
+class Window {
 
 public:
 	const std::string WINDOW_TITLE = "CHIP-8 Emulator";

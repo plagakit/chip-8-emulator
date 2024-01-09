@@ -71,7 +71,7 @@ public:
 	};
 
 	CHIP8(const char* path);
-	void LoadFromBuffer(BYTE* buffer);
+	void InitFromBuffer(BYTE* rom);
 	void Cycle();
 
 };

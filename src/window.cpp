@@ -1,7 +1,8 @@
-#include "emulator.h"
+#include "window.h"
+
 #include <iostream>
 
-bool Emulator::Init(const char* path)
+bool Window::Init(const char* path)
 {
 	chip8 = new CHIP8(path);
 	delayTime = SDL_GetTicks64();
@@ -59,7 +60,7 @@ bool Emulator::Init(const char* path)
 	return true;
 }
 
-void Emulator::Terminate()
+void Window::Terminate()
 {
 	delete chip8;
 	
@@ -75,7 +76,7 @@ void Emulator::Terminate()
 	SDL_Quit();
 }
 
-void Emulator::HandleEvents()
+void Window::HandleEvents()
 {
 	SDL_Event e;
 	while (SDL_PollEvent(&e) != 0)
@@ -86,7 +87,7 @@ void Emulator::HandleEvents()
 	}
 }
 
-void Emulator::UpdateCHIP8()
+void Window::UpdateCHIP8()
 {
 	// UPDATE CHIP 8
 	// Update key states
@@ -125,7 +126,7 @@ void Emulator::UpdateCHIP8()
 	chip8->Cycle();
 }
 
-void Emulator::Update()
+void Window::Update()
 {	
 	if (chip8 != nullptr && !paused)
 		UpdateCHIP8();
@@ -324,7 +325,7 @@ void Emulator::Update()
 	ImGui::End();
 }
 
-void Emulator::Render()
+void Window::Render()
 {
 	
 	SDL_SetRenderDrawColor(renderer, 94, 75, 107, 255);
@@ -373,7 +374,7 @@ void Emulator::Render()
 }
 
 
-bool Emulator::IsRunning()
+bool Window::IsRunning()
 {
 	return running;
 }

@@ -56,6 +56,6 @@ private:
 	ImFont* font;
 	ImFont* fontMedium;
 	ImFont* fontBig;
-	std::string romName = "slipperyslope.ch8";
+	std::string romName = "";
 
 };

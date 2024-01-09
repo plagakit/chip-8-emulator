@@ -1,6 +1,7 @@
 #include "window.h"
 
 #include <iostream>
+#include <filesystem>
 
 bool Window::Init() 
 {
@@ -55,6 +56,8 @@ bool Window::InitCHIP8(const char* path)
 	chip8 = new CHIP8(path);
 	delayTime = SDL_GetTicks64();
 	soundTime = SDL_GetTicks64();
+
+	romName = std::filesystem::path(path).filename().string();
 
 	std::cout << "Initialized emulator.\n";
 	paused = false;
@@ -146,20 +149,20 @@ void Window::Update()
 
 void Window::RenderKeymap()
 {
-	ImGui::SetNextWindowPos(ImVec2(0, 512));
-	ImGui::SetNextWindowSize(ImVec2(208, 208));
-	ImGui::Begin("KeymapPane", NULL, flags | ImGuiWindowFlags_NoBackground);
+	static const ImVec2 window_pos = { 0, 512 };
+	static const ImVec2 window_size = { 208, 208 };
+	static const char key_chars[] = { '1','2','3','4','Q','W','E','R','A','S','D','F','Z','X','C','V' };
+	//static const char key_vals[] = { '1', '2', '3', 'C', '4', '5', '6', 'D', '7', '8', '9', 'E', 'A', '0', 'B', 'F' };
 
-	static const char keys[] = { '1','2','3','4','Q','W','E','R','A','S','D','F','Z','X','C','V' };
-	//static const char chars[] = { '1', '2', '3', 'C', '4', '5', '6', 'D', '7', '8', '9', 'E', 'A', '0', 'B', 'F' };
-	
+	ImGui::SetNextWindowPos(window_pos);
+	ImGui::SetNextWindowSize(window_size);
+	ImGui::Begin("KeymapPane", NULL, flags | ImGuiWindowFlags_NoBackground);
 	ImGui::PushFont(fontMedium);
 
-	if (ImGui::BeginTable("KeymapTable", 4, tableFlags, ImVec2(208, 208)))
+	if (ImGui::BeginTable("KeymapTable", 4, tableFlags, window_size))
 	{
 		for (int row = 0; row < 4; row++)
 		{
-
 			ImGui::TableNextRow(0, 52);
 			for (int col = 0; col < 4; col++)
 			{
@@ -171,7 +174,7 @@ void Window::RenderKeymap()
 				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f + 52 * col);
 
 				// And then render the right key text
-				ImGui::Text("%c", keys[row * 4 + col]);
+				ImGui::Text("%c", key_chars[row * 4 + col]);
 			}
 		}
 		ImGui::EndTable();
@@ -183,8 +186,13 @@ void Window::RenderKeymap()
 
 void Window::RenderTimers()
 {
-	ImGui::SetNextWindowPos(ImVec2(208, 512));
-	ImGui::SetNextWindowSize(ImVec2(208, 208));
+	static const ImVec2 window_pos = { 208, 512 };
+	static const ImVec2 window_size = { 208, 208 };
+	static const ImU32 off_color = IM_COL32(65, 60, 60, 255);
+	static const ImU32 on_color = IM_COL32(0, 255, 0, 255);
+
+	ImGui::SetNextWindowPos(window_pos);
+	ImGui::SetNextWindowSize(window_size);
 	ImGui::Begin("TimerWindow", NULL, flags);
 
 	if (chip8 != nullptr)
@@ -195,24 +203,25 @@ void Window::RenderTimers()
 		// Delay timer
 		ImGui::Text("Delay Timer: 0x%02x", chip8->DT);
 
-		float dtProgress = (float)chip8->DT / 15;
-		ImVec2 p0 = ImGui::GetCursorScreenPos();
-		ImVec2 p1 = ImVec2(p0.x + dtProgress * 208, p0.y + 50);
-		ImVec2 p1n = ImVec2(p0.x + 208, p0.y + 50);
-		drawList->AddRectFilled(p0, p1n, IM_COL32(65, 60, 60, 255));
-		drawList->AddRectFilled(p0, p1, IM_COL32(0, 255, 0, 255));
+		float dtProgress = (float)chip8->DT / 0xF;
+		ImVec2 rectMin = ImGui::GetCursorScreenPos();
+		ImVec2 rectMax = ImVec2(rectMin.x + 208, rectMin.y + 50);
+		ImVec2 dtMax = ImVec2(rectMin.x + dtProgress * 208, rectMin.y + 50);
 
+		drawList->AddRectFilled(rectMin, rectMax, off_color);
+		drawList->AddRectFilled(rectMin, dtMax, on_color);
 
 		// Sound timer
-		ImGui::SetCursorScreenPos(ImVec2(p0.x, p0.y + 65));
+		ImGui::SetCursorScreenPos(ImVec2(rectMin.x, rectMin.y + 65));
 		ImGui::Text("Sound Timer: 0x%02x", chip8->ST);
 
-		float stProgress = (float)chip8->ST / 15;
-		ImVec2 p2 = ImGui::GetCursorScreenPos();
-		ImVec2 p3 = ImVec2(p2.x + stProgress * 208, p2.y + 50);
-		ImVec2 p3n = ImVec2(p2.x + 208, p2.y + 50);
-		drawList->AddRectFilled(p2, p3n, IM_COL32(65, 60, 60, 255));
-		drawList->AddRectFilled(p2, p3, IM_COL32(0, 255, 0, 255));
+		float stProgress = (float)chip8->ST / 0xF;
+		rectMin = ImGui::GetCursorScreenPos();
+		rectMax = ImVec2(rectMin.x + 208, rectMin.y + 50);
+		ImVec2 stMax = ImVec2(rectMin.x + stProgress * 208, rectMin.y + 50);
+
+		drawList->AddRectFilled(rectMin, rectMax, off_color);
+		drawList->AddRectFilled(rectMin, stMax, on_color);
 
 		ImGui::PopFont();
 	}
@@ -221,12 +230,15 @@ void Window::RenderTimers()
 
 void Window::RenderRegisters()
 {	
-	ImGui::SetNextWindowPos(ImVec2(208 * 2, 512));
-	ImGui::SetNextWindowSize(ImVec2(608, 208));
+	static const ImVec2 window_pos = { 208 * 2, 512 };
+	static const ImVec2 window_size = { 608, 208 };
+
+	ImGui::SetNextWindowPos(window_pos);
+	ImGui::SetNextWindowSize(window_size);
 	ImGui::Begin("RegisterWindow", NULL, flags);
 	ImGui::PushFont(fontMedium);
 
-	if (ImGui::BeginTable("RegistersTable", 6, tableFlags, ImVec2(608, 208)))
+	if (ImGui::BeginTable("RegistersTable", 6, tableFlags, window_size))
 	{
 		for (int row = 0; row < 3; row++)
 		{
@@ -256,14 +268,18 @@ void Window::RenderRegisters()
 
 void Window::RenderRightPane() 
 {
+	static const ImVec2 window_pos = { 1024, 0 };
+	static const ImVec2 window_size = { 256, 720 };
+	static const int margin = 8;
+
 	// Right pane
-	ImGui::SetNextWindowPos(ImVec2(1024, 0));
-	ImGui::SetNextWindowSize(ImVec2(256, 720));
+	ImGui::SetNextWindowPos(window_pos);
+	ImGui::SetNextWindowSize(window_size);
 	ImGui::Begin("RightPane", NULL, flags);
 
 	// LOAD ROM BUTTON
 	ImGui::PushFont(fontBig);
-	bool buttonClicked = ImGui::Button("Load ROM", ImVec2(240, 50));
+	bool buttonClicked = ImGui::Button("Load ROM", ImVec2(window_size.x - margin * 2, 50));
 	ImGui::PopFont();
 
 	if (buttonClicked)
@@ -276,27 +292,26 @@ void Window::RenderRightPane()
 		if (ImGuiFileDialog::Instance()->IsOk())
 		{
 			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
-			romName = ImGuiFileDialog::Instance()->GetCurrentFileName();
-			chip8 = new CHIP8(filePath.c_str());
-			paused = false;
+			InitCHIP8(filePath.c_str());
 		}
 		ImGuiFileDialog::Instance()->Close();
 	}
 	ImGui::Text("%s", romName.c_str());
 
 	// Pause/step buttons
+	static const ImVec2 button_size = { window_size.x / 2 - (int)(margin * 1.5), 40 };
 	if (chip8 == nullptr)
 	{
 		ImGui::BeginDisabled();
-		ImGui::Button("Pause", ImVec2(116, 40));
+		ImGui::Button("Pause", button_size);
 		ImGui::SameLine();
-		ImGui::Button("Cycle", ImVec2(116, 40));
+		ImGui::Button("Cycle", button_size);
 		ImGui::EndDisabled();
 	}
 	else
 	{
 		std::string pauseText = paused ? "Resume" : "Pause";
-		if (ImGui::Button(pauseText.c_str(), ImVec2(116, 40)))
+		if (ImGui::Button(pauseText.c_str(), button_size))
 			paused = !paused;
 
 		ImGui::SameLine();
@@ -304,23 +319,25 @@ void Window::RenderRightPane()
 		if (!paused)
 			ImGui::BeginDisabled();
 
-		if (ImGui::Button("Cycle", ImVec2(116, 40)))
+		if (ImGui::Button("Cycle", button_size))
 			UpdateCHIP8();
 
 		if (!paused) ImGui::EndDisabled();
 	}
 
-	// PC & instructions
+	// PC & instructions & stack
 	if (chip8 != nullptr)
 	{
 		ImGui::Text("PC: 0x%03X", chip8->PC);
 
+		// Instructions
 		ImGui::Text("Instructions");
-		ImGui::BeginChild("Instructions", ImVec2(240, 472), true);
+		ImGui::BeginChild("Instructions", ImVec2(window_size.x - margin * 2, 472), true);
 		for (std::string s : chip8->instructionList)
 			ImGui::Text("%s", s.c_str());
 		ImGui::EndChild();
 
+		// Stack
 		ImGui::Text("Stack Length: %d", chip8->stack.size());
 		ImGui::Text("Stack Top:");
 		if (chip8->stack.size() > 0)

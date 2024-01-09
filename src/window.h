@@ -19,7 +19,8 @@ public:
 	const int GAME_WIDTH = 1024;
 	const int GAME_HEIGHT = 512;
 
-	bool Init(const char* path);
+	bool Init();
+	bool InitCHIP8(const char* path);
 	void Terminate();
 
 	void HandleEvents();

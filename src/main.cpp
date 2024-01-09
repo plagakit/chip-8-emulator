@@ -5,40 +5,38 @@
 #include <emscripten.h>
 #endif
 
-Window emulator;
+Window window;
 
-void EmulatorLoop()
+void UpdateWindow()
 {
-	emulator.HandleEvents();
-	emulator.Update();
-	emulator.Render();
-}
-
-#ifdef __EMSCRIPTEN__
-void EmscriptenLoop()
-{
-	if (!emulator.IsRunning())
+	if (!window.IsRunning())
 	{
-		emulator.Terminate();
-		emscripten_cancel_main_loop();
-	}
-	EmulatorLoop();
-}
+		window.Terminate();
+#ifdef __EMSCRIPTEN__
+		empscripten_cancel_main_loop()
 #endif
+	}
+	window.HandleEvents();
+	window.Update();
+	window.Render();
+}
 
 int main(int argc, char* args[])
 {
-	if(!emulator.Init("res/slipperyslope.ch8"))
+	if (!window.Init()) 
+		return 1;
+
+	if(!window.InitCHIP8("res/slipperyslope.ch8"))
 		return 1;
 
 #ifdef __EMSCRIPTEN__
 	emscripten_set_main_loop(EmscriptenLoop, 0, 1);
 #else
-	while (emulator.IsRunning())
-		EmulatorLoop();
-#endif
+	while (window.IsRunning())
+		UpdateWindow();
 
-	emulator.Terminate();
+	window.Terminate();
+#endif
 
 	return 0;
 }

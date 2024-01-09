@@ -2,15 +2,8 @@
 
 #include <iostream>
 
-bool Window::Init(const char* path)
+bool Window::Init() 
 {
-	chip8 = new CHIP8(path);
-	delayTime = SDL_GetTicks64();
-	soundTime = SDL_GetTicks64();
-
-	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
-	paused = false;
-
 	// Init SDL
 	std::cout << "About to initialize SDL...\n";
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0)
@@ -26,7 +19,7 @@ bool Window::Init(const char* path)
 		std::cout << "Window could not be created! SDL Error: " << SDL_GetError() << "\n";
 		return false;
 	}
-	
+
 	// Create accelerated renderer
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);// | SDL_RENDERER_PRESENTVSYNC);
 	if (renderer == NULL)
@@ -44,9 +37,10 @@ bool Window::Init(const char* path)
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::StyleColorsLight();
-
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+	// Init fonts
 	char fontPath[] = "res/Segoe-UI-Variable.ttf";
 	font = io.Fonts->AddFontFromFileTTF(fontPath, 22.0f);
 	fontMedium = io.Fonts->AddFontFromFileTTF(fontPath, 28.0f);
@@ -54,6 +48,16 @@ bool Window::Init(const char* path)
 
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	ImGui_ImplSDLRenderer_Init(renderer);
+}
+
+bool Window::InitCHIP8(const char* path)
+{
+	chip8 = new CHIP8(path);
+	delayTime = SDL_GetTicks64();
+	soundTime = SDL_GetTicks64();
+
+	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
+	paused = false;
 
 	std::cout << "Initialized emulator.\n";
 	running = true;

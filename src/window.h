@@ -31,6 +31,11 @@ public:
 	bool IsRunning();
 
 private:
+	void RenderKeymap();
+	void RenderTimers();
+	void RenderRegisters();
+	void RenderRightPane();
+
 	SDL_Window* window;
 	SDL_Surface* surface;
 	SDL_Renderer* renderer;
@@ -40,7 +45,14 @@ private:
 	bool paused;
 	Uint64 delayTime, soundTime;
 
-	SDL_Rect pixel;
+	const ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
+								 | ImGuiWindowFlags_NoMove
+							     | ImGuiWindowFlags_NoResize
+								 | ImGuiWindowFlags_NoScrollbar
+								 | ImGuiWindowFlags_NoScrollWithMouse;
+	const ImGuiTableFlags tableFlags = ImGuiTableFlags_SizingStretchSame;
+
+	SDL_Rect pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
 	ImFont* font;
 	ImFont* fontMedium;
 	ImFont* fontBig;

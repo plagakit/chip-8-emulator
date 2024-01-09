@@ -41,7 +41,7 @@ bool Window::Init()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
 	// Init fonts
-	char fontPath[] = "res/Segoe-UI-Variable.ttf";
+	const char *fontPath = "res/Segoe-UI-Variable.ttf";
 	font = io.Fonts->AddFontFromFileTTF(fontPath, 22.0f);
 	fontMedium = io.Fonts->AddFontFromFileTTF(fontPath, 28.0f);
 	fontBig = io.Fonts->AddFontFromFileTTF(fontPath, 32.0f);
@@ -56,10 +56,8 @@ bool Window::InitCHIP8(const char* path)
 	delayTime = SDL_GetTicks64();
 	soundTime = SDL_GetTicks64();
 
-	pixel = { 0, 0, GAME_WIDTH / 64, GAME_HEIGHT / 32 };
-	paused = false;
-
 	std::cout << "Initialized emulator.\n";
+	paused = false;
 	running = true;
 	return true;
 }
@@ -140,36 +138,39 @@ void Window::Update()
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+	RenderKeymap();
+	RenderTimers();
+	RenderRegisters();
+	RenderRightPane();
+}
 
-	// Bottom left keymap pane
+void Window::RenderKeymap()
+{
 	ImGui::SetNextWindowPos(ImVec2(0, 512));
 	ImGui::SetNextWindowSize(ImVec2(208, 208));
-	ImGui::Begin("KeymapPane", NULL, flags 
-		| ImGuiWindowFlags_NoBackground 
-		| ImGuiWindowFlags_NoScrollbar 
-		| ImGuiWindowFlags_NoScrollWithMouse);
-	ImGui::PushFont(fontMedium);
+	ImGui::Begin("KeymapPane", NULL, flags | ImGuiWindowFlags_NoBackground);
 
-	char keys[] = { '1','2','3','4','Q','W','E','R','A','S','D','F','Z','X','C','V'};
-	char chars[] = { '1', '2', '3', 'C', '4', '5', '6', 'D', '7', '8', '9', 'E', 'A', '0', 'B', 'F' };
-	ImGuiTableFlags tableFlags = ImGuiTableFlags_SizingStretchSame;
+	static const char keys[] = { '1','2','3','4','Q','W','E','R','A','S','D','F','Z','X','C','V' };
+	//static const char chars[] = { '1', '2', '3', 'C', '4', '5', '6', 'D', '7', '8', '9', 'E', 'A', '0', 'B', 'F' };
+	
+	ImGui::PushFont(fontMedium);
 
 	if (ImGui::BeginTable("KeymapTable", 4, tableFlags, ImVec2(208, 208)))
 	{
 		for (int row = 0; row < 4; row++)
 		{
-			
+
 			ImGui::TableNextRow(0, 52);
 			for (int col = 0; col < 4; col++)
 			{
 				ImGui::TableSetColumnIndex(col);
 
-				// Center text
+				// Center key text in squares with shitty hack
 				auto windowWidth = 52;
 				auto textWidth = ImGui::CalcTextSize("O").x;
 				ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f + 52 * col);
 
+				// And then render the right key text
 				ImGui::Text("%c", keys[row * 4 + col]);
 			}
 		}
@@ -178,9 +179,10 @@ void Window::Update()
 	ImGui::PopFont();
 
 	ImGui::End();
+}
 
-
-	// Timers
+void Window::RenderTimers()
+{
 	ImGui::SetNextWindowPos(ImVec2(208, 512));
 	ImGui::SetNextWindowSize(ImVec2(208, 208));
 	ImGui::Begin("TimerWindow", NULL, flags);
@@ -190,6 +192,7 @@ void Window::Update()
 		ImGui::PushFont(fontMedium);
 		auto drawList = ImGui::GetWindowDrawList();
 
+		// Delay timer
 		ImGui::Text("Delay Timer: 0x%02x", chip8->DT);
 
 		float dtProgress = (float)chip8->DT / 15;
@@ -199,6 +202,8 @@ void Window::Update()
 		drawList->AddRectFilled(p0, p1n, IM_COL32(65, 60, 60, 255));
 		drawList->AddRectFilled(p0, p1, IM_COL32(0, 255, 0, 255));
 
+
+		// Sound timer
 		ImGui::SetCursorScreenPos(ImVec2(p0.x, p0.y + 65));
 		ImGui::Text("Sound Timer: 0x%02x", chip8->ST);
 
@@ -212,11 +217,13 @@ void Window::Update()
 		ImGui::PopFont();
 	}
 	ImGui::End();
+}
 
-	// Registers
+void Window::RenderRegisters()
+{	
 	ImGui::SetNextWindowPos(ImVec2(208 * 2, 512));
 	ImGui::SetNextWindowSize(ImVec2(608, 208));
-	ImGui::Begin("RegisterWindow", NULL, flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+	ImGui::Begin("RegisterWindow", NULL, flags);
 	ImGui::PushFont(fontMedium);
 
 	if (ImGui::BeginTable("RegistersTable", 6, tableFlags, ImVec2(608, 208)))
@@ -245,17 +252,14 @@ void Window::Update()
 	}
 	ImGui::PopFont();
 	ImGui::End();
+}
 
-	// Sprite
-
-
-
+void Window::RenderRightPane() 
+{
 	// Right pane
 	ImGui::SetNextWindowPos(ImVec2(1024, 0));
 	ImGui::SetNextWindowSize(ImVec2(256, 720));
 	ImGui::Begin("RightPane", NULL, flags);
-
-	//ImGui::ShowDemoWindow();
 
 	// LOAD ROM BUTTON
 	ImGui::PushFont(fontBig);
@@ -329,13 +333,13 @@ void Window::Update()
 	ImGui::End();
 }
 
+
 void Window::Render()
 {
-	
 	SDL_SetRenderDrawColor(renderer, 94, 75, 107, 255);
 	SDL_RenderClear(renderer);
 
-	// Draw game
+	// Render game
 	if (chip8 != nullptr)
 	{
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -371,6 +375,7 @@ void Window::Render()
 		}
 	}
 
+	// Render ImGui windows
 	ImGui::Render();
 	ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 

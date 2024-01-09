@@ -136,7 +136,8 @@ void Window::Update()
 	if (chip8 != nullptr && !paused)
 		UpdateCHIP8();
 	
-	// UPDATE GUI
+	// UPDATE GUI - seems like this should be in Render() but ImGui needs to 
+	// be "rendered" in update before actually rendering
 	ImGui_ImplSDLRenderer_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();

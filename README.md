@@ -9,6 +9,7 @@ This project is built using CMake. Make sure CMake is installed on your computer
 Check out the repo, then on your machine do:
 
 ```bash
+mkdir bin
 cmake ..
 make
 ```

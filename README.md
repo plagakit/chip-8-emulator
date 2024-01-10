@@ -4,7 +4,7 @@
 
 This project is built using CMake. Make sure CMake is installed on your computer (or that CMake can do `find_package(SDL2 REQUIRED)` without errors).
 
-#### Desktop Application
+#### Desktop Application (Linux)
 
 Check out the repo, then on your machine do:
 

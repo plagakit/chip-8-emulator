@@ -1,4 +1,0 @@
-[submodule "chip-8-emulator/lib/ImGuiFileDialog"]
-	path = chip-8-emulator/lib/ImGuiFileDialog
-	url = https://github.com/aiekick/ImGuiFileDialog.git
-	branch = Lib_Only

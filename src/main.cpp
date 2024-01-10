@@ -13,7 +13,7 @@ void UpdateWindow()
 	if (!window.IsRunning())
 	{
 		window.Terminate();
-		empscripten_cancel_main_loop()
+		emscripten_cancel_main_loop();
 	}
 #endif
 	window.HandleEvents();
@@ -26,7 +26,7 @@ int main(int argc, char* args[])
 	if (!window.Init()) 
 		return 1;
 
-	if (!window.InitCHIP8("res/slipperyslope.ch8"))
+	if (!window.InitCHIP8("res/roms/slipperyslope.ch8"))
 		return 1;
 
 #ifdef __EMSCRIPTEN__

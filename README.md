@@ -6,7 +6,7 @@ This project is built using CMake. Make sure CMake is installed on your computer
 
 #### Desktop Application (Linux)
 
-Check out the repo, then on your machine do:
+Clone the repo, then on your machine do:
 
 ```bash
 mkdir bin
